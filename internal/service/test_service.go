@@ -8,16 +8,19 @@ import (
 
 type TestRepository interface {
 	CreateTest(ctx context.Context, test *core.Test) error
-	GetByID(ctx context.Context, testID string) (*core.Test, error)
-	GetAll(ctx context.Context) ([]*core.Test, error)
+	GetTestByID(ctx context.Context, testID string) (*core.Test, error)
+	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, id string) error
 	AddConfig(ctx context.Context, testID string, config *core.Config) error
-	DeleteConfig(ctx context.Context, testID string, configID string) error
 	GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error)
+	GetAllConfigs(ctx context.Context) ([]core.Config, error)
+	GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error)
+	DeleteConfig(ctx context.Context, testID string) error
+	GetLogs(ctx context.Context, testID string, configID string) error
 }
 
 type TestRunner interface {
-	Run(test *core.Test, configName string) (*core.log, error)
+	Run(test *core.Test, configName string) (*core.Log, error)
 }
 
 type Service struct {
@@ -34,11 +37,11 @@ func (s *Service) CreateTest(ctx context.Context, test *core.Test) error {
 }
 
 func (s *Service) GetByID(ctx context.Context, testId string) (*core.Test, error) {
-	return s.repo.GetByID(ctx, testId)
+	return s.repo.GetTestByID(ctx, testId)
 }
 
-func (s *Service) GetAll(ctx context.Context) ([]*core.Test, error) {
-	return s.repo.GetAll(ctx)
+func (s *Service) GetAll(ctx context.Context) ([]core.Test, error) {
+	return s.repo.GetAllTests(ctx)
 }
 
 func (s *Service) DeleteTest(ctx context.Context, id string) error {
@@ -49,8 +52,8 @@ func (s *Service) AddConfig(ctx context.Context, testID string, config *core.Con
 	return s.repo.AddConfig(ctx, testID, config)
 }
 
-func (s *Service) DeleteConfig(ctx context.Context, testID string, configID string) error {
-	return s.repo.DeleteConfig(ctx, testID, configID)
+func (s *Service) DeleteConfig(ctx context.Context, testID string) error {
+	return s.repo.DeleteConfig(ctx, testID)
 }
 
 func (s *Service) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {

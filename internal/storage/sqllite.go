@@ -1,8 +1,11 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+
+	"github.com/gordejka179/test-manager/internal/core"
 )
 
 type SQLiteStorage struct {
@@ -57,4 +60,166 @@ func createTables(db *sql.DB) error {
 		);
 	`)
 	return err
+}
+
+//TODO: везде обработка ошибок
+
+// Tests
+func (s *SQLiteStorage) CreateTest(ctx context.Context, test *core.Test) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO tests (id, name, binary, created_at) 
+		VALUES (?, ?, ?, ?)`,
+		test.ID, test.Name, test.Binary, test.CreatedAt)
+	return err
+}
+
+func (s *SQLiteStorage) GetTestByID(ctx context.Context, id string) (core.Test, error) {
+	var test core.Test
+	err := s.db.QueryRowContext(ctx,
+		`SELECT id, name, binary, created_at 
+		FROM tests WHERE id = ?`, id).Scan(
+		&test.ID, &test.Name, &test.Binary, &test.CreatedAt)
+
+	// TODO: Обработка ошибок
+	return test, err
+}
+
+func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, name, description, created_at, updated_at FROM tests`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tests []core.Test
+	for rows.Next() {
+		var test core.Test
+		if err := rows.Scan(
+			&test.ID, &test.Name, &test.Binary, &test.CreatedAt); err != nil {
+			return nil, err
+		}
+		tests = append(tests, test)
+	}
+
+	return tests, nil
+}
+
+func (s *SQLiteStorage) DeleteTest(ctx context.Context, test *core.Test) error {
+	_, err := s.db.ExecContext(ctx,
+		`DELETE FROM tests WHERE id = ?`, test.ID)
+	if err != nil {
+		return err
+	}
+
+	// TODO: обработка ошибок
+
+	return nil
+
+}
+
+// Configs
+
+func (s *SQLiteStorage) AddConfig(ctx context.Context, testID string, config *core.Config) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO test_configs (id, test_id, name, config, created_at)
+		VALUES (?, ?, ?, ?, ?)`,
+		config.ID, config.TestID, config.Name, config.Config, config.CreatedAt)
+	return err
+}
+
+func (s *SQLiteStorage) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {
+	var config core.Config
+	err := s.db.QueryRowContext(ctx,
+		`SELECT id, test_id, name, config, created_at
+		FROM test_configs WHERE id = ?`,
+		configID).Scan(
+		&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt)
+
+	return &config, err
+}
+
+func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, test_id, name, config, created_at
+		FROM test_configs`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var configs []core.Config
+	for rows.Next() {
+		var config core.Config
+		if err := rows.Scan(
+			&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		configs = append(configs, config)
+	}
+
+	return configs, nil
+}
+
+func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, test_id, name, config, created_at
+		FROM test_configs WHERE test_id = ?`,
+		testID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var configs []core.Config
+	for rows.Next() {
+		var config core.Config
+		if err := rows.Scan(
+			&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		configs = append(configs, config)
+	}
+
+	return configs, nil
+
+}
+
+func (s *SQLiteStorage) DeleteConfig(ctx context.Context, testID string) error {
+	_, err := s.db.ExecContext(ctx,
+		`DELETE FROM test_configs WHERE id = ?`, testID)
+	if err != nil {
+		return err
+	}
+
+	// TODO: обработка ошибок
+
+	return nil
+}
+
+func (s *SQLiteStorage) GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, test_id, config_id, output, created_at
+		FROM test_logs WHERE id = ? AND test_id =Y`,
+		configID, testID)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var logs []core.Log
+	for rows.Next() {
+		var log core.Log
+		if err := rows.Scan(
+			&log.ID, &log.TestID, &log.ConfigID, &log.Output, &log.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		logs = append(logs, log)
+	}
+
+	return logs, nil
 }

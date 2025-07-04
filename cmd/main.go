@@ -1,10 +1,10 @@
 package main
 
 import (
-	test_manager "app"
 	"log"
 	"os"
 
+	tm "github.com/gordejka179/test-manager"
 	"github.com/gordejka179/test-manager/internal/api"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	handlers := new(api.Handler)
 
-	srv := new(test_manager.Server)
+	srv := new(tm.Server)
 
 	if err := srv.Run(conf.appPort, handlers.InitRoutes()); err != nil {
 		log.Fatalf("Error occured while running http server: %s", err.Error())
