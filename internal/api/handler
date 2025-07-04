@@ -1,0 +1,30 @@
+package api
+
+import (
+	"github.com/gin-gonic/gin"
+)
+
+type Handler struct {
+}
+
+func (h *Handler) InitRoutes() *gin.Engine {
+	router := gin.New()
+
+	// tests
+	r.GET("/tests", a.ListTests)
+	r.POST("/tests", a.CreateTest)
+	r.GET("/tests/:id", a.GetTest)
+	r.PUT("/tests/:id", a.UpdateTest)
+	r.DELETE("/tests/:id", a.DeleteTest)
+
+	// configs
+	r.POST("/tests/:id/configs", a.AddConfig)
+	r.GET("/tests/:id/configs", a.ListConfigs)
+	r.GET("/tests/:id/configs/:configId", a.GetConfig)
+	r.DELETE("/tests/:id/configs/:configId", a.DeleteConfig)
+
+	// test running
+	r.POST("/tests/:id/run", a.RunTest)
+
+	return router
+}
