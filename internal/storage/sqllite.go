@@ -9,7 +9,7 @@ import (
 )
 
 type SQLiteStorage struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
@@ -26,7 +26,7 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		return nil, fmt.Errorf("failed to create tables: %w", err)
 	}
 
-	return &SQLiteStorage{db: db}, nil
+	return &SQLiteStorage{DB: db}, nil
 }
 
 func createTables(db *sql.DB) error {
@@ -66,26 +66,26 @@ func createTables(db *sql.DB) error {
 
 // Tests
 func (s *SQLiteStorage) CreateTest(ctx context.Context, test *core.Test) error {
-	_, err := s.db.ExecContext(ctx,
+	_, err := s.DB.ExecContext(ctx,
 		`INSERT INTO tests (id, name, binary, created_at) 
 		VALUES (?, ?, ?, ?)`,
 		test.ID, test.Name, test.Binary, test.CreatedAt)
 	return err
 }
 
-func (s *SQLiteStorage) GetTestByID(ctx context.Context, id string) (core.Test, error) {
+func (s *SQLiteStorage) GetTestByID(ctx context.Context, id string) (*core.Test, error) {
 	var test core.Test
-	err := s.db.QueryRowContext(ctx,
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, name, binary, created_at 
 		FROM tests WHERE id = ?`, id).Scan(
 		&test.ID, &test.Name, &test.Binary, &test.CreatedAt)
 
 	// TODO: Обработка ошибок
-	return test, err
+	return &test, err
 }
 
 func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, name, description, created_at, updated_at FROM tests`)
 	if err != nil {
 		return nil, err
@@ -105,9 +105,9 @@ func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	return tests, nil
 }
 
-func (s *SQLiteStorage) DeleteTest(ctx context.Context, test *core.Test) error {
-	_, err := s.db.ExecContext(ctx,
-		`DELETE FROM tests WHERE id = ?`, test.ID)
+func (s *SQLiteStorage) DeleteTest(ctx context.Context, testID string) error {
+	_, err := s.DB.ExecContext(ctx,
+		`DELETE FROM tests WHERE id = ?`, testID)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *SQLiteStorage) DeleteTest(ctx context.Context, test *core.Test) error {
 // Configs
 
 func (s *SQLiteStorage) AddConfig(ctx context.Context, testID string, config *core.Config) error {
-	_, err := s.db.ExecContext(ctx,
+	_, err := s.DB.ExecContext(ctx,
 		`INSERT INTO test_configs (id, test_id, name, config, created_at)
 		VALUES (?, ?, ?, ?, ?)`,
 		config.ID, config.TestID, config.Name, config.Config, config.CreatedAt)
@@ -130,7 +130,7 @@ func (s *SQLiteStorage) AddConfig(ctx context.Context, testID string, config *co
 
 func (s *SQLiteStorage) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {
 	var config core.Config
-	err := s.db.QueryRowContext(ctx,
+	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, test_id, name, config, created_at
 		FROM test_configs WHERE id = ?`,
 		configID).Scan(
@@ -140,7 +140,7 @@ func (s *SQLiteStorage) GetConfigByID(ctx context.Context, testID string, config
 }
 
 func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, test_id, name, config, created_at
 		FROM test_configs`)
 	if err != nil {
@@ -163,7 +163,7 @@ func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error
 }
 
 func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, test_id, name, config, created_at
 		FROM test_configs WHERE test_id = ?`,
 		testID)
@@ -188,7 +188,7 @@ func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) 
 }
 
 func (s *SQLiteStorage) DeleteConfig(ctx context.Context, testID string) error {
-	_, err := s.db.ExecContext(ctx,
+	_, err := s.DB.ExecContext(ctx,
 		`DELETE FROM test_configs WHERE id = ?`, testID)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (s *SQLiteStorage) DeleteConfig(ctx context.Context, testID string) error {
 }
 
 func (s *SQLiteStorage) GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error) {
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, test_id, config_id, output, created_at
 		FROM test_logs WHERE id = ? AND test_id =Y`,
 		configID, testID)

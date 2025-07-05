@@ -16,11 +16,7 @@ type TestRepository interface {
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error)
 	DeleteConfig(ctx context.Context, testID string) error
-	GetLogs(ctx context.Context, testID string, configID string) error
-}
-
-type TestRunner interface {
-	Run(test *core.Test, configName string) (*core.Log, error)
+	GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error)
 }
 
 type Service struct {
