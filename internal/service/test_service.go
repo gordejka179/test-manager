@@ -7,7 +7,7 @@ import (
 )
 
 type TestRepository interface {
-	CreateTest(ctx context.Context, test *core.Test) error
+	AddTest(ctx context.Context, test *core.Test) error
 	GetTestByID(ctx context.Context, testID string) (*core.Test, error)
 	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, id string) error
@@ -19,39 +19,50 @@ type TestRepository interface {
 	GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error)
 }
 
-type Service struct {
-	repo   TestRepository
-	runner TestRunner
+type TestService struct {
+	repo TestRepository
 }
 
-func NewService(repo TestRepository, runner TestRunner) *Service {
-	return &Service{repo: repo, runner: runner}
+func NewTestService(repo TestRepository) *TestService {
+	return &TestService{repo: repo}
 }
 
-func (s *Service) CreateTest(ctx context.Context, test *core.Test) error {
-	return s.repo.CreateTest(ctx, test)
+func (s *TestService) AddTest(ctx context.Context, test *core.Test) error {
+	return s.repo.AddTest(ctx, test)
 }
 
-func (s *Service) GetByID(ctx context.Context, testId string) (*core.Test, error) {
+func (s *TestService) GetTestByID(ctx context.Context, testId string) (*core.Test, error) {
 	return s.repo.GetTestByID(ctx, testId)
 }
 
-func (s *Service) GetAll(ctx context.Context) ([]core.Test, error) {
+func (s *TestService) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	return s.repo.GetAllTests(ctx)
 }
 
-func (s *Service) DeleteTest(ctx context.Context, id string) error {
+func (s *TestService) DeleteTest(ctx context.Context, id string) error {
 	return s.repo.DeleteTest(ctx, id)
 }
 
-func (s *Service) AddConfig(ctx context.Context, testID string, config *core.Config) error {
+func (s *TestService) AddConfig(ctx context.Context, testID string, config *core.Config) error {
 	return s.repo.AddConfig(ctx, testID, config)
 }
 
-func (s *Service) DeleteConfig(ctx context.Context, testID string) error {
+func (s *TestService) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {
+	return s.repo.GetConfigByID(ctx, testID, configID)
+}
+
+func (s *TestService) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
+	return s.repo.GetAllConfigs(ctx)
+}
+
+func (s *TestService) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
+	return s.repo.GetAllConfigsToTest(ctx, testID)
+}
+
+func (s *TestService) DeleteConfig(ctx context.Context, testID string) error {
 	return s.repo.DeleteConfig(ctx, testID)
 }
 
-func (s *Service) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {
-	return s.repo.GetConfigByID(ctx, testID, configID)
+func (s *TestService) GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error) {
+	return s.repo.GetLogs(ctx, testID, configID)
 }

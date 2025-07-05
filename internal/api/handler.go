@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gordejka179/test-manager/internal/service"
 	"github.com/gordejka179/test-manager/internal/storage"
-	"github.com/gordejka179/test-manager/internal/transport"
+	"github.com/gordejka179/test-manager/internal/transport/rest/handler"
 )
 
 type Handler struct {
@@ -21,27 +21,14 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		log.Fatalf("Failed to create SQLite storage: %v", err)
 	}
 
-	Runner := storage.NewRunner(TestRepository.DB)
+	Service := service.NewTestService(TestRepository)
+	ServiceHandler := handler.NewTestServiceHandler(Service)
 
-	Service := service.NewService(TestRepository, Runner)
+	//Runner := storage.NewRunner(TestRepository.DB)
 
-	ServiceHandler := transport.NewServiceHandler(Service)
+	router.GET("/tests", ServiceHandler.GetAllTests)
 
-	router.GET("/tests", h.ListTests)
-
-	router.POST("/tests", h.CreateTest)
-	router.GET("/tests/:id", h.GetTest)
-	router.PUT("/tests/:id", h.UpdateTest)
-	router.DELETE("/tests/:id", h.DeleteTest)
-
-	// configs
-	router.POST("/tests/:id/configs", h.AddConfig)
-	router.GET("/tests/:id/configs", h.ListConfigs)
-	router.GET("/tests/:id/configs/:configId", h.GetConfig)
-	router.DELETE("/tests/:id/configs/:configId", h.DeleteConfig)
-
-	// test running
-	router.POST("/tests/:id/run", h.RunTest)
+	router.POST("/tests/newTest", ServiceHandler.AddTest)
 
 	return router
 }

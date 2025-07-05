@@ -65,7 +65,7 @@ func createTables(db *sql.DB) error {
 //TODO: везде обработка ошибок
 
 // Tests
-func (s *SQLiteStorage) CreateTest(ctx context.Context, test *core.Test) error {
+func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 	_, err := s.DB.ExecContext(ctx,
 		`INSERT INTO tests (id, name, binary, created_at) 
 		VALUES (?, ?, ?, ?)`,
