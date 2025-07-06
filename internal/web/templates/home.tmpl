@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Менеджер тестов</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+        .frame {
+            display: flex;
+            width: 900px;
+            height: 600px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar {
+            width: 30%;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        .content {
+            width: 70%;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .new-test-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .new-test-btn:hover {
+            background-color: #45a049;
+        }
+
+        .new-config-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            padding: 2px 6px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .new-config-btn:hover {
+            background-color: #0b7dda;
+        }
+
+
+        .test-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .test-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+            padding-right: 50px;
+        }
+        .test-list li:hover {
+            background-color: #e0e0e0;
+        }
+        .test-list li.active {
+            background-color: #d0d0d0;
+            font-weight: bold;
+        }
+        .test-description {
+            padding: 15px;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .download-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .download-btn:hover {
+            background-color: #0b7dda;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%;
+            border-radius: 5px;
+        }
+        .closeTestModal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .closeTestModal:hover {
+            color: black;
+        }
+
+        .closeConfigModal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .closeConfigModal:hover {
+            color: black;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group .file-input-wrapper {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .file-input-wrapper {
+            position: relative;
+        }
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-input-label {
+            display: block;
+            padding: 8px;
+            background-color: #f0f0f0;
+            border: 1px dashed #ccc;
+            text-align: center;
+            cursor: pointer;
+        }
+        .file-input-label:hover {
+            background-color: #e0e0e0;
+        }
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="frame">
+            <div class="sidebar">
+                <h2>Мои тесты</h2>
+                <button id="newTestBtn" class="new-test-btn">Новый тест</button>
+                <ul id="testList" class="test-list">
+                    <!-- Тесты будут добавляться сюда динамически -->
+                </ul>
+            </div>
+            <div class="content">
+                <div id="testDescription" class="test-description">
+                    <p>Выберите тест из списка или создайте новый.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для нового теста -->
+    <div id="newTestModal" class="modal">
+        <div class="modal-content">
+            <span class="closeTestModal">&times;</span>
+            <h2>Создать новый тест</h2>
+            <form id="testForm">
+                <div class="form-group">
+                    <label for="testName">Название теста:</label>
+                    <input type="text" id="testName" required>
+                </div>
+                <div class="form-group">
+                    <label>Файл теста (.out или .go):</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="testFile" accept=".out,.go" required>
+                        <label for="testFile" class="file-input-label" id="fileInputLabel">Выберите файл с компьютера</label>
+                    </div>
+                    <div id="fileInfo" class="file-info" style="display: none;">
+                        Выбранный файл: <span id="fileName"></span> (<span id="fileSize"></span> KB)
+                    </div>
+                    <div id="fileError" class="error-message" style="display: none;"></div>
+                </div>
+                <button type="submit" class="submit-btn">Создать тест</button>
+            </form>
+        </div>
+    </div>
+
+
+
+
+    <!-- Модальное окно для нового конфига -->
+    <div id="newConfigModal" class="modal">
+        <div class="modal-content">
+            <span class="closeConfigModal">&times;</span>
+            <h2>Создать новый конфиг</h2>
+            <form id="ConfigForm">
+                <div class="config-group">
+                    <label for="configName">Название конфига:</label>
+                    <input type="text" id="configName" required>
+                </div>
+                <div class="form-group">
+                    <label>Файл конфига (.out или .go):</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="configFile" accept=".out,.go" required>
+                        <label for="configFile" class="file-input-label" id="fileInputLabel">Выберите файл с компьютера</label>
+                    </div>
+                    <div id="fileInfo" class="file-info" style="display: none;">
+                        Выбранный файл: <span id="fileName"></span> (<span id="fileSize"></span> KB)
+                    </div>
+                    <div id="fileError" class="error-message" style="display: none;"></div>
+                </div>
+                <button type="submit" class="submit-btn">Создать конфиг</button>
+            </form>
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const testList = document.getElementById('testList');
+            const testDescription = document.getElementById('testDescription');
+            const newTestBtn = document.getElementById('newTestBtn');
+            const newTestModal = document.getElementById('newTestModal');
+            const closeTestModalBtn = document.querySelector('.closeTestModal');
+            const testForm = document.getElementById('testForm');
+            const testFileInput = document.getElementById('testFile');
+            const fileInputLabel = document.getElementById('fileInputLabel');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const fileError = document.getElementById('fileError');
+
+            const newConfigModal = document.getElementById('newConfigModal');
+            const closeConfigModalBtn = document.querySelector('.closeConfigModal');
+            const configForm = document.getElementById('ConfigForm');
+            const configFileInput = document.getElementById('configFile');
+            const configInputLabel = document.getElementById('configInputLabel');
+
+            
+            // Переменная для хранения текущего выбранного теста
+            let currentSelectedTest = null;
+
+            // Загрузить тесты с сервера при загрузке страницы
+            let tests = [];
+            
+            async function fetchTests() {
+                try {
+                    const response = await fetch('/home/tests');
+                    if (!response.ok) {
+                        throw new Error('Ошибка при загрузке тестов');
+                    }
+                    tests = await response.json();
+                    if (tests === null){
+                        tests = []
+                    }
+                    loadTests();
+                    
+                    // Показать первый тест, если есть
+                    if (tests && tests.length > 0) {
+                        showTestDescription(tests[0]);
+                    }
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке тестов: ${error.message}</p>`;
+                }
+            }
+            
+            // Загрузка тестов в боковую панель
+            function loadTests() {
+            
+                testList.innerHTML = '';
+                if (tests != null){
+                    tests.forEach(test => {
+                        const li = document.createElement('li');
+                        li.textContent = test.name;
+                        li.dataset.id = test.name;
+                        li.addEventListener('click', () => showTestDescription(test));
+
+                        const NewConfigBtn = document.createElement('button');
+                        NewConfigBtn.className = 'new-config-btn';
+                        NewConfigBtn.textContent = '+ Add';
+                        NewConfigBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            newConfigModal.style.display = 'block'
+                        });
+                        li.appendChild(NewConfigBtn);
+
+
+
+                        const configUl = document.createElement('ul');
+                        configUl.className = 'config-list';
+                        configUl.dataset.testId = test.name;
+                        
+                        /*
+                        test.configs.forEach(config => {
+                            const configLi = document.createElement('li');
+                            configLi.className = 'config-item';
+                            configLi.dataset.configId = config.id;
+                            configLi.textContent = config.name;
+                            configLi.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                showConfigDescription(test, config);
+                            });
+                            configUl.appendChild(configLi);
+                        });
+                        */
+                    
+                        li.appendChild(configUl);
+                        testList.appendChild(li);
+                        
+                            
+                    
+                    });
+                }
+            }
+            
+            
+            // Показать описание теста в основной области
+            function showTestDescription(test) {
+                // Удалить активный класс у всех элементов
+                document.querySelectorAll('.test-list li').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Добавить активный класс выбранному элементу
+                const selectedItem = document.querySelector(`.test-list li[data-id="${test.name}"]`);
+                if (selectedItem) {
+                    selectedItem.classList.add('active');
+                    currentSelectedTest = test
+                }
+                
+                // Создать ссылку для скачивания файла
+                let fileContent = '';
+                if (test.binary) {
+                    // Преобразуем бинарные данные в Blob и создаем URL для скачивания
+                    const binaryString = atob(test.binary);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    const blob = new Blob([bytes], { type: 'application/octet-stream' });
+                    const fileUrl = URL.createObjectURL(blob);
+                    
+                    fileContent = `
+                        <div class="file-info">
+                            <strong>Прикреплённый файл:</strong> ${test.name}
+                            <a href="${fileUrl}" download="${test.name}" class="download-btn">Скачать файл</a>
+                        </div>
+                    `;
+                }
+                
+                testDescription.innerHTML = `
+                    <h2>${test.name}</h2>
+                    ${fileContent}
+                `;
+            }
+            
+            // Обработчик нажатия кнопки "Новый тест"
+            newTestBtn.addEventListener('click', function() {
+                newTestModal.style.display = 'block';
+            });
+            
+            // Закрыть модальное окно с новым тестом
+            closeTestModalBtn.addEventListener('click', function() {
+                newTestModal.style.display = 'none';
+                resetTestForm();
+            });
+            
+            // Закрыть модальное окно при клике снаружи
+            window.addEventListener('click', function(event) {
+                if (event.target === newTestModal) {
+                    newTestModal.style.display = 'none';
+                    resetTestForm();
+                }
+            });
+            
+            // Сбросить форму
+            function resetTestForm() {
+                testForm.reset();
+                fileInfo.style.display = 'none';
+                fileError.style.display = 'none';
+                fileInputLabel.textContent = 'Выберите файл с компьютера';
+            }
+            
+            // Обработчик выбора файла
+            testFileInput.addEventListener('change', function(e) {
+                fileError.style.display = 'none';
+                
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const allowedExtensions = /(\.out|\.go)$/i;
+                    
+                    if (!allowedExtensions.exec(file.name)) {
+                        fileError.textContent = 'Неверный тип файла. Пожалуйста, выберите файл с расширением .out или .go.';
+                        fileError.style.display = 'block';
+                        this.value = '';
+                        return;
+                    }
+                    
+                    fileName.textContent = file.name;
+                    fileSize.textContent = Math.round(file.size / 1024);
+                    fileInfo.style.display = 'block';
+                    fileInputLabel.textContent = 'Изменить выбранный файл';
+                }
+            });
+            
+            // Обработчик отправки формы с тестом с POST-запросом
+            testForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const testName = document.getElementById('testName').value;
+                const file = testFileInput.files[0];
+                
+                // Проверить файл
+                if (file) {
+                    const allowedExtensions = /(\.out|\.go)$/i;
+                    if (!allowedExtensions.exec(file.name)) {
+                        fileError.textContent = 'Неверный тип файла. Пожалуйста, выберите файл с расширением .out или .go.';
+                        fileError.style.display = 'block';
+                        return;
+                    }
+                }
+                
+                try {
+                    
+                    // Создаем FormData для отправки файла
+                    const formData = new FormData();
+                    formData.append('name', testName);
+                    formData.append('file', file);
+                    
+                    // Отправляем POST-запрос
+                    const response = await fetch('/home/tests/newTest', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при создании теста');
+                    }
+                    
+                    
+                    // Получаем созданный тест с сервера
+                    const newTest = await response.json();
+                    
+                    // Добавляем тест в список
+                    tests.push(newTest);
+
+
+                    //Для нового теста добавляем ему свойства и массив из конфигов
+                    const li = document.createElement('li');
+                    li.textContent = newTest.name;
+                    li.dataset.id = newTest.name;
+                    li.addEventListener('click', () => showCDescription(newTest));
+                    const NewConfigBtn = document.createElement('button');
+                    NewConfigBtn.className = 'new-config-btn';
+                    NewConfigBtn.textContent = '+ Add';
+                    NewConfigBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        newConfigModal.style.display = 'block'
+                    });
+                    li.appendChild(NewConfigBtn);
+                    const configUl = document.createElement('ul');
+                    configUl.className = 'config-list';
+                    configUl.dataset.testId = newTest.name;
+                    li.appendChild(configUl);
+                    testList.appendChild(li);
+                    
+
+
+                    showTestDescription(newTest);
+                    
+                    // Сбросить форму и закрыть модальное окно
+                    resetTestForm();
+                    newTestModal.style.display = 'none';
+                    
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    fileError.textContent = `Ошибка при создании теста: ${error.message}`;
+                    fileError.style.display = 'block';
+                }
+            });
+
+
+            // Закрыть модальное окно с новым конфигом
+            closeConfigModalBtn.addEventListener('click', function() {
+                newConfigModal.style.display = 'none';
+            });
+            
+
+            // Сбросить форму c новым конфигом
+            function resetConfigForm() {
+                configForm.reset();
+                fileInfo.style.display = 'none';
+                fileError.style.display = 'none';
+                fileInputLabel.textContent = 'Выберите файл с компьютера';
+            }
+
+
+
+            // Обработчик отправки формы с конфигом с POST-запросом
+            configForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const testName = currentSelectedTest.name
+                const configName = document.getElementById('configName').value;
+                const file = configFileInput.files[0];
+                
+                // Проверить файл
+                if (file) {
+                    const allowedExtensions = /(\.out|\.go)$/i;
+                    if (!allowedExtensions.exec(file.name)) {
+                        fileError.textContent = 'Неверный тип файла. Пожалуйста, выберите файл с расширением .out или .go.';
+                        fileError.style.display = 'block';
+                        return;
+                    }
+                }
+                
+                try {
+                    // Создаем FormData для отправки файла
+                    const formData = new FormData();
+                    formData.append('testName', testName);
+                    formData.append('configName', configName);
+                    formData.append('file', file);
+                    
+                    // Отправляем POST-запрос
+                    const response = await fetch('/home/tests/newConfig', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при создании теста');
+                    }
+                    
+
+                    // Получаем созданный конфиг с сервера
+                    const newConfig = await response.json();
+
+
+                    //showConfigDescription(newConfig);
+                    
+                    // Сбросить форму и закрыть модальное окно
+                    resetConfigForm();
+                    newConfigModal.style.display = 'none';
+                    
+                         
+                    
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    fileError.textContent = `Ошибка при создании конфига: ${error.message}`;
+                    fileError.style.display = 'block';
+                }
+            });
+
+        
+
+            
+            // Инициализация страницы - загрузка тестов
+            fetchTests();
+            
+            
+        });
+
+
+
+    </script>
+</body>
+</html>

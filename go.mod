@@ -2,7 +2,10 @@ module github.com/gordejka179/test-manager
 
 go 1.24.4
 
-require github.com/gin-gonic/gin v1.10.1
+require (
+	github.com/gin-gonic/gin v1.10.1
+	github.com/mattn/go-sqlite3 v1.14.28
+)
 
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect

@@ -1,26 +1,20 @@
 package core
 
-import "time"
-
 type Test struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Binary    []byte    `json:"description"`
-	CreatedAt time.Time `json:"created_at"`
+	Name   string `json:"name"`
+	Binary []byte `json:"binary"`
 }
 
 type Config struct {
-	ID        string    `json:"id"`
-	TestID    string    `json:"test_id"`
-	Name      string    `json:"name"`
-	Config    string    `json:"config"`
-	CreatedAt time.Time `json:"created_at"`
+	ID       int    `json:"id"`
+	TestName string `json:"test_name"`
+	Name     string `json:"name"`
+	Config   string `json:"config"`
 }
 
 type Log struct {
-	ID        string    `json:"id"`
-	TestID    string    `json:"test_id"`
-	ConfigID  string    `json:"config_id"`
-	Output    string    `json:"output"`
-	CreatedAt time.Time `json:"created_at"`
+	ID       int    `json:"id"`
+	TestName string `json:"test_name"`
+	ConfigID string `json:"config_id"`
+	Output   string `json:"output"`
 }

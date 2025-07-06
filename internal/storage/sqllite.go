@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/gordejka179/test-manager/internal/core"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type SQLiteStorage struct {
@@ -32,61 +34,64 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 func createTables(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS tests (
-			id TEXT PRIMARY KEY,
-			name TEXT NOT NULL,
-			binary BLOB NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			name TEXT NOT NULL PRIMARY KEY,
+			binary BLOB NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS test_configs (
-			id TEXT PRIMARY KEY,
-			test_id TEXT NOT NULL,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			test_name TEXT NOT NULL,
 			name TEXT NOT NULL,
 			config TEXT NOT NULL,
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			FOREIGN KEY(test_id) REFERENCES tests(id) ON DELETE CASCADE
+			FOREIGN KEY(test_name) REFERENCES tests(name) ON DELETE CASCADE
 		);
 
 		CREATE TABLE IF NOT EXISTS test_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			test_id TEXT NOT NULL,
+			test_name TEXT NOT NULL,
 			config_id TEXT NOT NULL,
 			output TEXT,         
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			
-			FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE,
+			FOREIGN KEY (test_name) REFERENCES tests(name) ON DELETE CASCADE,
 
-			FOREIGN KEY (config_id) REFERENCES test_configs(id) ON DELETE CASCADE,
+			FOREIGN KEY (config_id) REFERENCES test_configs(id) ON DELETE CASCADE
 		);
 	`)
 	return err
 }
 
-//TODO: везде обработка ошибок
-
 // Tests
+
+//TODO: проверить был ли такой тест раньше
+
 func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 	_, err := s.DB.ExecContext(ctx,
-		`INSERT INTO tests (id, name, binary, created_at) 
-		VALUES (?, ?, ?, ?)`,
-		test.ID, test.Name, test.Binary, test.CreatedAt)
+		`INSERT INTO tests (name, binary) 
+		VALUES (?, ?)`,
+		test.Name, test.Binary)
+
+	if err != nil {
+		log.Fatalf("Ошибка метода AddTest: %v", err)
+	}
 	return err
 }
 
-func (s *SQLiteStorage) GetTestByID(ctx context.Context, id string) (*core.Test, error) {
+func (s *SQLiteStorage) GetTestByName(ctx context.Context, name string) (*core.Test, error) {
 	var test core.Test
 	err := s.DB.QueryRowContext(ctx,
-		`SELECT id, name, binary, created_at 
-		FROM tests WHERE id = ?`, id).Scan(
-		&test.ID, &test.Name, &test.Binary, &test.CreatedAt)
+		`SELECT name, binary 
+		FROM tests WHERE name = ?`, name).Scan(
+		&test.Name, &test.Binary)
 
-	// TODO: Обработка ошибок
+	if err != nil {
+		log.Fatalf("Ошибка метода GetTestByName: %v", err)
+	}
 	return &test, err
 }
 
 func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, name, description, created_at, updated_at FROM tests`)
+		`SELECT name, binary FROM tests`)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +100,7 @@ func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	var tests []core.Test
 	for rows.Next() {
 		var test core.Test
-		if err := rows.Scan(
-			&test.ID, &test.Name, &test.Binary, &test.CreatedAt); err != nil {
+		if err := rows.Scan(&test.Name, &test.Binary); err != nil {
 			return nil, err
 		}
 		tests = append(tests, test)
@@ -105,43 +109,40 @@ func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	return tests, nil
 }
 
-func (s *SQLiteStorage) DeleteTest(ctx context.Context, testID string) error {
+func (s *SQLiteStorage) DeleteTest(ctx context.Context, name string) error {
 	_, err := s.DB.ExecContext(ctx,
-		`DELETE FROM tests WHERE id = ?`, testID)
+		`DELETE FROM tests WHERE name = ?`, name)
 	if err != nil {
 		return err
 	}
-
-	// TODO: обработка ошибок
 
 	return nil
 
 }
 
 // Configs
-
-func (s *SQLiteStorage) AddConfig(ctx context.Context, testID string, config *core.Config) error {
+func (s *SQLiteStorage) AddConfig(ctx context.Context, config *core.Config) error {
 	_, err := s.DB.ExecContext(ctx,
-		`INSERT INTO test_configs (id, test_id, name, config, created_at)
-		VALUES (?, ?, ?, ?, ?)`,
-		config.ID, config.TestID, config.Name, config.Config, config.CreatedAt)
+		`INSERT INTO test_configs (test_name, name, config)
+		VALUES (?, ?, ?)`,
+		config.TestName, config.Name, config.Config)
 	return err
 }
 
-func (s *SQLiteStorage) GetConfigByID(ctx context.Context, testID string, configID string) (*core.Config, error) {
+func (s *SQLiteStorage) GetConfigByID(ctx context.Context, configID string) (*core.Config, error) {
 	var config core.Config
 	err := s.DB.QueryRowContext(ctx,
-		`SELECT id, test_id, name, config, created_at
+		`SELECT id, test_name, name, config
 		FROM test_configs WHERE id = ?`,
 		configID).Scan(
-		&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt)
+		&config.ID, &config.TestName, &config.Name, &config.Config)
 
 	return &config, err
 }
 
 func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, test_id, name, config, created_at
+		`SELECT id, test_name, name, config
 		FROM test_configs`)
 	if err != nil {
 		return nil, err
@@ -152,7 +153,7 @@ func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error
 	for rows.Next() {
 		var config core.Config
 		if err := rows.Scan(
-			&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt,
+			&config.ID, &config.TestName, &config.Name, &config.Config,
 		); err != nil {
 			return nil, err
 		}
@@ -162,11 +163,11 @@ func (s *SQLiteStorage) GetAllConfigs(ctx context.Context) ([]core.Config, error
 	return configs, nil
 }
 
-func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
+func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, test_id, name, config, created_at
-		FROM test_configs WHERE test_id = ?`,
-		testID)
+		`SELECT id, test_name, name, config
+		FROM test_configs WHERE test_name = ?`,
+		testName)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +177,7 @@ func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) 
 	for rows.Next() {
 		var config core.Config
 		if err := rows.Scan(
-			&config.ID, &config.TestID, &config.Name, &config.Config, &config.CreatedAt,
+			&config.ID, &config.TestName, &config.Name, &config.Config,
 		); err != nil {
 			return nil, err
 		}
@@ -187,23 +188,21 @@ func (s *SQLiteStorage) GetAllConfigsToTest(ctx context.Context, testID string) 
 
 }
 
-func (s *SQLiteStorage) DeleteConfig(ctx context.Context, testID string) error {
+func (s *SQLiteStorage) DeleteConfig(ctx context.Context, id string) error {
 	_, err := s.DB.ExecContext(ctx,
-		`DELETE FROM test_configs WHERE id = ?`, testID)
+		`DELETE FROM test_configs WHERE id = ?`, id)
 	if err != nil {
 		return err
 	}
 
-	// TODO: обработка ошибок
-
 	return nil
 }
 
-func (s *SQLiteStorage) GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error) {
+func (s *SQLiteStorage) GetLogs(ctx context.Context, testName string, configID string) ([]core.Log, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, test_id, config_id, output, created_at
-		FROM test_logs WHERE id = ? AND test_id =Y`,
-		configID, testID)
+		`SELECT id, test_name, config_id, output
+		FROM test_logs WHERE test_name = ? AND config_id = ?`,
+		testName, configID)
 
 	if err != nil {
 		return nil, err
@@ -214,7 +213,7 @@ func (s *SQLiteStorage) GetLogs(ctx context.Context, testID string, configID str
 	for rows.Next() {
 		var log core.Log
 		if err := rows.Scan(
-			&log.ID, &log.TestID, &log.ConfigID, &log.Output, &log.CreatedAt,
+			&log.ID, &log.TestName, &log.ConfigID, &log.Output,
 		); err != nil {
 			return nil, err
 		}
