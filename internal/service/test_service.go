@@ -11,7 +11,7 @@ type TestRepository interface {
 	GetTestByName(ctx context.Context, name string) (*core.Test, error)
 	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, name string) error
-	AddConfig(ctx context.Context, config *core.Config) error
+	AddConfig(ctx context.Context, config *core.Config) (int64, error)
 	GetConfigByID(ctx context.Context, configID string) (*core.Config, error)
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
@@ -43,7 +43,7 @@ func (s *TestService) DeleteTest(ctx context.Context, name string) error {
 	return s.repo.DeleteTest(ctx, name)
 }
 
-func (s *TestService) AddConfig(ctx context.Context, config *core.Config) error {
+func (s *TestService) AddConfig(ctx context.Context, config *core.Config) (int64, error) {
 	return s.repo.AddConfig(ctx, config)
 }
 

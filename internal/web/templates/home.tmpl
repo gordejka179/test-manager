@@ -93,10 +93,19 @@
         .test-list li:hover {
             background-color: #e0e0e0;
         }
-        .test-list li.active {
-            background-color: #d0d0d0;
+        .config-list > li:hover {
+            background-color: #c0c0c0;
+        }
+
+        .test-item.active {
+            background-color: #e0e0e0;
             font-weight: bold;
         }
+
+        .config-item.active {
+            background-color: #b0b0b0;
+        }
+
         .test-description {
             padding: 15px;
         }
@@ -336,10 +345,13 @@
                     }
                     loadTests();
                     
+                    await getConfigsToAllTests()
+
                     // Показать первый тест, если есть
                     if (tests && tests.length > 0) {
                         showTestDescription(tests[0]);
                     }
+
                 } catch (error) {
                     console.error('Ошибка:', error);
                     testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке тестов: ${error.message}</p>`;
@@ -353,6 +365,7 @@
                 if (tests != null){
                     tests.forEach(test => {
                         const li = document.createElement('li');
+                        li.className = 'test-item'
                         li.textContent = test.name;
                         li.dataset.id = test.name;
                         li.addEventListener('click', () => showTestDescription(test));
@@ -361,6 +374,7 @@
                         NewConfigBtn.className = 'new-config-btn';
                         NewConfigBtn.textContent = '+ Add';
                         NewConfigBtn.addEventListener('click', (e) => {
+                            currentSelectedTest = test
                             e.stopPropagation();
                             newConfigModal.style.display = 'block'
                         });
@@ -372,19 +386,6 @@
                         configUl.className = 'config-list';
                         configUl.dataset.testId = test.name;
                         
-                        /*
-                        test.configs.forEach(config => {
-                            const configLi = document.createElement('li');
-                            configLi.className = 'config-item';
-                            configLi.dataset.configId = config.id;
-                            configLi.textContent = config.name;
-                            configLi.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                showConfigDescription(test, config);
-                            });
-                            configUl.appendChild(configLi);
-                        });
-                        */
                     
                         li.appendChild(configUl);
                         testList.appendChild(li);
@@ -399,7 +400,7 @@
             // Показать описание теста в основной области
             function showTestDescription(test) {
                 // Удалить активный класс у всех элементов
-                document.querySelectorAll('.test-list li').forEach(item => {
+                document.querySelectorAll('.test-item, .config-item').forEach(item => {
                     item.classList.remove('active');
                 });
                 
@@ -410,6 +411,7 @@
                     currentSelectedTest = test
                 }
                 
+
                 // Создать ссылку для скачивания файла
                 let fileContent = '';
                 if (test.binary) {
@@ -531,11 +533,13 @@
                     const li = document.createElement('li');
                     li.textContent = newTest.name;
                     li.dataset.id = newTest.name;
-                    li.addEventListener('click', () => showCDescription(newTest));
+                    li.className = 'test-item'
+                    li.addEventListener('click', () => showTestDescription(newTest));
                     const NewConfigBtn = document.createElement('button');
                     NewConfigBtn.className = 'new-config-btn';
                     NewConfigBtn.textContent = '+ Add';
                     NewConfigBtn.addEventListener('click', (e) => {
+                        currentSelectedTest = newTest
                         e.stopPropagation();
                         newConfigModal.style.display = 'block'
                     });
@@ -618,6 +622,21 @@
                     const newConfig = await response.json();
 
 
+
+                    const configLi = document.createElement('li');
+                    configLi.className = 'config-item';
+                    configLi.dataset.id = newConfig.id;
+                    configLi.textContent = newConfig.name;
+                    configLi.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showConfigDescription(newConfig);
+                    });
+
+                    const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
+                    console.log(config_ul)
+                    config_ul.appendChild(configLi)
+
+
                     //showConfigDescription(newConfig);
                     
                     // Сбросить форму и закрыть модальное окно
@@ -633,10 +652,95 @@
                 }
             });
 
-        
+
+
+            function showConfigDescription(config) {
+                // Удалить активный класс у всех элементов
+                document.querySelectorAll('.test-item, .config-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Добавить активный класс выбранному элементу
+                const selectedConfig = document.querySelector(`.config-item[data-id="${config.id}"]`);
+                if (selectedConfig) {
+                    selectedConfig.classList.add('active');
+                    const parentTestItem = selectedConfig.closest('.test-item');
+                    if (parentTestItem) {
+                        parentTestItem.classList.add('active');
+                    }
+                }
+
+                 // Создать ссылку для скачивания файла
+                let fileContent = '';
+                if (config.config) {
+                    const blob = new Blob([config.config], { type: 'application/octet-stream' });
+                    const fileUrl = URL.createObjectURL(blob);
+    
+                    const fileContent = `
+                        <div class="file-info">
+                            <strong>Прикреплённый файл:</strong> ${config.name}
+                            <a href="${fileUrl}" download="${config.name}" class="download-btn">Скачать файл</a>
+                        </div>
+                    `;
+    
+                    // Обновляем содержимое
+                    testDescription.innerHTML = `
+                        <h2>${config.name}</h2>
+                        ${fileContent}
+                    `;
+                }
+                
+
+            }
+
+
+            async function getConfigsToAllTests() {
+                for (let j = 0; j < tests.length; j++) {
+                    let test = tests[j]
+                    try {
+                        const formData = new FormData();
+                        formData.append('testName', test.name);
+
+                        const response = await fetch('/home/tests/configsToTest', {
+                        method: 'POST', 
+                        body: formData
+                        })
+
+
+                        if (!response.ok) {
+                            throw new Error('Ошибка при загрузке конфигов к тесту');
+                        }
+                        let configs = await response.json();
+                        if (configs === null){
+                            configs = []
+                        }
+
+                        for (let i = 0; i < configs.length; i++) {
+                            let config = configs[i]
+                            const config_ul = document.querySelector(`.test-list li[data-id="${config.test_name}"]`);
+
+                            const configLi = document.createElement('li');
+                            configLi.className = 'config-item';
+                            configLi.dataset.id = config.id;
+                            configLi.textContent = config.name;
+                            configLi.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                showConfigDescription(config);
+                            });
+                            config_ul.appendChild(configLi)
+                            
+                        }  
+                    } catch (error) {
+                        console.error('Ошибка:', error);
+                        testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
+                    }
+                        
+                } 
+            }
+
 
             
-            // Инициализация страницы - загрузка тестов
+            // Инициализация страницы - загрузка тестов и конфигов к ним
             fetchTests();
             
             

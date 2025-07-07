@@ -38,6 +38,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	router.POST("/home/tests/newTest", ServiceHandler.AddTest)
 	router.POST("/home/tests/newConfig", ServiceHandler.AddConfig)
+	router.POST("/home/tests/configsToTest", ServiceHandler.GetAllConfigsToTest)
 
 	return router
 }

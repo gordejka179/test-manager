@@ -15,7 +15,7 @@ type TestService interface {
 	GetTestByName(ctx context.Context, name string) (*core.Test, error)
 	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, name string) error
-	AddConfig(ctx context.Context, config *core.Config) error
+	AddConfig(ctx context.Context, config *core.Config) (int64, error)
 	GetConfigByID(ctx context.Context, configID string) (*core.Config, error)
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
@@ -64,9 +64,7 @@ func (h *TestServiceHandler) AddTest(c *gin.Context) {
 	Test := core.Test{Name: name, Binary: fileBytes}
 	h.service.AddTest(c, &Test)
 
-	c.JSON(http.StatusOK, gin.H{
-		"name": name,
-	})
+	c.JSON(http.StatusOK, Test)
 }
 
 func (h *TestServiceHandler) AddConfig(c *gin.Context) {
@@ -90,10 +88,25 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 
 	fileText := string(fileBytes)
 	config := core.Config{TestName: TestName, Name: ConfigName, Config: fileText}
-	h.service.AddConfig(c, &config)
+	id, err := h.service.AddConfig(c, &config)
+	if err != nil {
+		log.Fatal("Ошибка метода AddConfig: ", err)
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"name":   ConfigName,
-		"config": fileText,
+		"test_name": TestName,
+		"id":        id,
+		"name":      ConfigName,
+		"config":    fileText,
 	})
+}
+
+func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
+	TestName := c.PostForm("testName")
+	configs, err := h.service.GetAllConfigsToTest(c, TestName)
+	if err != nil {
+		log.Fatal("Ошибка метода GetAllConfigsToTest: ", err)
+	}
+
+	c.JSON(http.StatusOK, configs)
 }

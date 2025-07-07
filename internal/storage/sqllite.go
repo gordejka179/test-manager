@@ -121,12 +121,20 @@ func (s *SQLiteStorage) DeleteTest(ctx context.Context, name string) error {
 }
 
 // Configs
-func (s *SQLiteStorage) AddConfig(ctx context.Context, config *core.Config) error {
-	_, err := s.DB.ExecContext(ctx,
+func (s *SQLiteStorage) AddConfig(ctx context.Context, config *core.Config) (int64, error) {
+	result, err := s.DB.ExecContext(ctx,
 		`INSERT INTO test_configs (test_name, name, config)
 		VALUES (?, ?, ?)`,
 		config.TestName, config.Name, config.Config)
-	return err
+
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return id, err
 }
 
 func (s *SQLiteStorage) GetConfigByID(ctx context.Context, configID string) (*core.Config, error) {
