@@ -431,6 +431,78 @@
                         <div class="config-form">
                         <h3>Конфигурация</h3>
                             <form id="configForm">
+                                <div class="form-group">
+                                    <label for="configName">configName:</label>
+                                    <input type="text" id="configName" value="example">
+                                </div>
+                                <fieldset>
+                                    <legend>Database Settings</legend>
+                                    <div class="form-group">
+                                        <label for="dbHosts">Hosts (comma separated):</label>
+                                        <input type="text" id="dbHosts" value='["mongodb1.example.com:27017", "mongodb2.example.com:27017"]'>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbUser">User:</label>
+                                        <input type="text" id="dbUser" value="admin">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbPassword">Password:</label>
+                                        <input type="password" id="dbPassword" value="securepassword">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbName">Database Name:</label>
+                                        <input type="text" id="dbName" value="my_database">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbConfigPath">DB Config Path:</label>
+                                        <input type="text" id="dbConfigPath" value="/path/to/db_config.yml">
+                                    </div>
+                                </fieldset>
+                    
+                                <fieldset>
+                                    <legend>Runtime Parameters</legend>
+                                    <div class="form-group">
+                                        <label for="runMode">Mode (5=CheckAllKeys, 6=CheckAllFields):</label>
+                                        <input type="number" id="runMode" value="5" min="5" max="6">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="readerGoroutines">Reader Goroutines:</label>
+                                        <input type="number" id="readerGoroutines" value="4" min="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="consumerGoroutines">Consumer Goroutines:</label>
+                                    <input type="number" id="consumerGoroutines" value="8" min="1">
+                                    </div>
+                                </fieldset>
+                    
+                                <fieldset>
+                                    <legend>Logging Configuration</legend>
+                                    <div class="form-group">
+                                        <label for="invalidFieldsLog">Invalid Fields Log:</label>
+                                        <input type="text" id="invalidFieldsLog" value="/var/log/myapp/invalid_fields.log">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="missingDocsLog">Missing Docs Log:</label>
+                                        <input type="text" id="missingDocsLog" value="/var/log/myapp/missing_docs.log">
+                                    </div>
+                                </fieldset>
+
+                                <div class="form-actions">
+                                    <button type="button" class="save-btn" onclick="saveConfig()">Save Config</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        
+                `;
+                }
+                if (test.config_type === "viper"){ 
+                testDescription.innerHTML = `
+                        <h2>${test.name}</h2>
+                        ${fileContent}
+                        <div class="config-form">
+                        <h3>Конфигурация</h3>
+                            <form id="configForm">
                                 <fieldset>
                                     <legend>Database Settings</legend>
                                     <div class="form-group">
@@ -717,23 +789,23 @@
                                 <h4>Настройки базы данных</h4>
                                 <div class="config-row">
                                     <span class="config-label">Hosts:</span>
-                                    <span class="config-value">${Array.isArray(config.content.hosts) ? config.content.hosts.join(', ') : config.content.hosts}</span>
+                                    <span class="config-value">${Array.isArray(config.hosts) ? config.hosts.join(', ') : config.hosts}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">User:</span>
-                                    <span class="config-value">${config.content.user}</span>
+                                    <span class="config-value">${config.user}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Password:</span>
-                                    <span class="config-value">${config.content.password}</span>
+                                    <span class="config-value">${config.password}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">DB Name:</span>
-                                    <span class="config-value">${config.content.db_name}</span>
+                                    <span class="config-value">${config.db_name}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">DB Config Path:</span>
-                                    <span class="config-value">${config.content.db_config}</span>
+                                    <span class="config-value">${config.db_config}</span>
                                 </div>
                             </div>
 
@@ -741,15 +813,15 @@
                                 <h4>Параметры выполнения</h4>
                                 <div class="config-row">
                                     <span class="config-label">Mode:</span>
-                                    <span class="config-value">${config.content.mode}</span>
+                                    <span class="config-value">${config.mode}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Reader Goroutines:</span>
-                                    <span class="config-value">${config.content.reader_goroutines}</span>
+                                    <span class="config-value">${config.reader_goroutines}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Consumer Goroutines:</span>
-                                    <span class="config-value">${config.content.consumer_goroutines}</span>
+                                    <span class="config-value">${config.consumer_goroutines}</span>
                                 </div>
                             </div>
 
@@ -757,11 +829,11 @@
                                 <h4>Настройки логирования</h4>
                                 <div class="config-row">
                                     <span class="config-label">Invalid Fields Log:</span>
-                                    <span class="config-value">${config.content.invalid_fields_log}</span>
+                                    <span class="config-value">${config.invalid_fields_log}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Missing Docs Log:</span>
-                                    <span class="config-value">${config.content.missing_docs_imported_log}</span>
+                                    <span class="config-value">${config.missing_docs_imported_log}</span>
                                 </div>
                             </div>
                         </div>
