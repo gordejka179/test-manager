@@ -1,15 +1,19 @@
 package core
 
+import "encoding/json"
+
 type Test struct {
-	Name   string `json:"name"`
-	Binary []byte `json:"binary"`
+	Name       string `json:"name"`
+	ConfigType string `json:"config_type"`
+	Binary     []byte `json:"binary"`
 }
 
 type Config struct {
-	ID       int    `json:"id"`
-	TestName string `json:"test_name"`
-	Name     string `json:"name"`
-	Config   string `json:"config"`
+	ID         int             `json:"id"`
+	TestName   string          `json:"test_name"`
+	Name       string          `json:"name"`
+	ConfigType string          `json:"config_type"`
+	Content    json.RawMessage `json:"content"`
 }
 
 type Log struct {

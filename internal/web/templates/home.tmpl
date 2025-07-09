@@ -279,61 +279,37 @@
 
     <!-- Модальное окно для нового теста -->
     <div id="newTestModal" class="modal">
-        <div class="modal-content">
-            <span class="closeTestModal">&times;</span>
-            <h2>Создать новый тест</h2>
-            <form id="testForm">
-                <div class="form-group">
-                    <label for="testName">Название теста:</label>
-                    <input type="text" id="testName" required>
+    <div class="modal-content">
+        <span class="closeTestModal">&times;</span>
+        <h2>Создать новый тест</h2>
+        <form id="testForm">
+            <div class="form-group">
+                <label for="testName">Название теста:</label>
+                <input type="text" id="testName" required>
+            </div>
+            <div class="form-group">
+                <label for="configType">Тип конфигурации:</label>
+                <select id="configType" name="configType" class="form-select" required>
+                    <option value="" disabled selected>Выберите тип...</option>
+                    <option value="toml">TOML</option>
+                    <option value="viper">Viper</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Файл теста:</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="testFile" name="testFile" required>
+                    <label for="testFile" class="file-input-label">Выберите файл с компьютера</label>
                 </div>
-                <div class="form-group">
-                    <label>Файл теста:</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="testFile" required>
-                        <label for="testFile" class="file-input-label" id="fileInputLabel">Выберите файл с компьютера</label>
-                    </div>
-                    <div id="fileInfo" class="file-info" style="display: none;">
-                        Выбранный файл: <span id="fileName"></span> (<span id="fileSize"></span> KB)
-                    </div>
-                    <div id="fileError" class="error-message" style="display: none;"></div>
+                <div id="fileInfo" class="file-info" style="display: none;">
+                    Выбранный файл: <span id="fileName"></span> (<span id="fileSize"></span> KB)
                 </div>
-                <button type="submit" class="submit-btn">Создать тест</button>
-            </form>
-        </div>
+                <div id="fileError" class="error-message" style="display: none;"></div>
+            </div>
+            <button type="submit" class="submit-btn">Создать тест</button>
+        </form>
     </div>
-
-
-
-
-    <!-- Модальное окно для нового конфига -->
-    <div id="newConfigModal" class="modal">
-        <div class="modal-content">
-            <span class="closeConfigModal">&times;</span>
-            <h2>Создать новый конфиг</h2>
-            <form id="ConfigForm">
-                <div class="config-group">
-                    <label for="configName">Название конфига:</label>
-                    <input type="text" id="configName" required>
-                </div>
-                <div class="form-group">
-                    <label>Файл конфига (.go):</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="configFile" accept=".go" required>
-                        <label for="configFile" class="file-input-label" id="fileInputLabel">Выберите файл с компьютера</label>
-                    </div>
-                    <div id="fileInfo" class="file-info" style="display: none;">
-                        Выбранный файл: <span id="fileName"></span> (<span id="fileSize"></span> KB)
-                    </div>
-                    <div id="fileError" class="error-message" style="display: none;"></div>
-                </div>
-                <button type="submit" class="submit-btn">Создать конфиг</button>
-            </form>
-        </div>
-    </div>
-
-
-
+</div>
 
 
     <script>
@@ -345,15 +321,12 @@
             const closeTestModalBtn = document.querySelector('.closeTestModal');
             const testForm = document.getElementById('testForm');
             const testFileInput = document.getElementById('testFile');
-            const fileInputLabel = document.getElementById('fileInputLabel');
+            const fileInputLabel = document.querySelector('.file-input-label');
             const fileInfo = document.getElementById('fileInfo');
             const fileName = document.getElementById('fileName');
             const fileSize = document.getElementById('fileSize');
             const fileError = document.getElementById('fileError');
-
-            const newConfigModal = document.getElementById('newConfigModal');
-            const closeConfigModalBtn = document.querySelector('.closeConfigModal');
-            const configForm = document.getElementById('ConfigForm');
+            
             const configFileInput = document.getElementById('configFile');
             const configInputLabel = document.getElementById('configInputLabel');
 
@@ -376,6 +349,7 @@
                     }
                     loadTests();
                     
+                    //Получаем с сервера конфиги ко всем тестам
                     await getConfigsToAllTests()
 
                     // Показать первый тест, если есть
@@ -401,28 +375,14 @@
                         li.dataset.id = test.name;
                         li.addEventListener('click', () => showTestDescription(test));
 
-                        const NewConfigBtn = document.createElement('button');
-                        NewConfigBtn.className = 'new-config-btn';
-                        NewConfigBtn.textContent = '+ Add';
-                        NewConfigBtn.addEventListener('click', (e) => {
-                            currentSelectedTest = test
-                            e.stopPropagation();
-                            newConfigModal.style.display = 'block'
-                        });
-                        li.appendChild(NewConfigBtn);
-
-
-
                         const configUl = document.createElement('ul');
                         configUl.className = 'config-list';
                         configUl.dataset.testId = test.name;
                         
-                    
                         li.appendChild(configUl);
                         testList.appendChild(li);
                         
                             
-                    
                     });
                 }
             }
@@ -458,15 +418,157 @@
                     fileContent = `
                         <div class="file-info">
                             <strong>Прикреплённый файл:</strong> ${test.name}
+                            <strong>Формат конфигов к тесту:</strong> ${test.config_type}
                             <a href="${fileUrl}" download="${test.name}" class="download-btn">Скачать файл</a>
                         </div>
                     `;
                 }
-                
+
+                if (test.config_type === "toml"){ 
                 testDescription.innerHTML = `
-                    <h2>${test.name}</h2>
-                    ${fileContent}
+                        <h2>${test.name}</h2>
+                        ${fileContent}
+                        <div class="config-form">
+                        <h3>Конфигурация</h3>
+                            <form id="configForm">
+                                <fieldset>
+                                    <legend>Database Settings</legend>
+                                    <div class="form-group">
+                                        <label for="configName">configName:</label>
+                                        <input type="text" id="configName" value="example">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbHosts">Hosts (comma separated):</label>
+                                        <input type="text" id="dbHosts" value='["mongodb1.example.com:27017", "mongodb2.example.com:27017"]'>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbUser">User:</label>
+                                        <input type="text" id="dbUser" value="admin">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbPassword">Password:</label>
+                                        <input type="password" id="dbPassword" value="securepassword">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbName">Database Name:</label>
+                                        <input type="text" id="dbName" value="my_database">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="dbConfigPath">DB Config Path:</label>
+                                        <input type="text" id="dbConfigPath" value="/path/to/db_config.yml">
+                                    </div>
+                                </fieldset>
+                    
+                                <fieldset>
+                                    <legend>Runtime Parameters</legend>
+                                    <div class="form-group">
+                                        <label for="runMode">Mode (5=CheckAllKeys, 6=CheckAllFields):</label>
+                                        <input type="number" id="runMode" value="5" min="5" max="6">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="readerGoroutines">Reader Goroutines:</label>
+                                        <input type="number" id="readerGoroutines" value="4" min="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="consumerGoroutines">Consumer Goroutines:</label>
+                                    <input type="number" id="consumerGoroutines" value="8" min="1">
+                                    </div>
+                                </fieldset>
+                    
+                                <fieldset>
+                                    <legend>Logging Configuration</legend>
+                                    <div class="form-group">
+                                        <label for="invalidFieldsLog">Invalid Fields Log:</label>
+                                        <input type="text" id="invalidFieldsLog" value="/var/log/myapp/invalid_fields.log">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="missingDocsLog">Missing Docs Log:</label>
+                                        <input type="text" id="missingDocsLog" value="/var/log/myapp/missing_docs.log">
+                                    </div>
+                                </fieldset>
+
+                                <div class="form-actions">
+                                    <button type="button" class="save-btn" onclick="saveConfig()">Save Config</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        
                 `;
+                }
+            }
+
+            window.saveConfig = async function () {
+                test = currentSelectedTest
+                const testName = test.name;
+                const configType = test.config_type;
+
+                const configName = document.querySelector(`.form-group input[id=configName]`).value;
+                const hosts = document.getElementById('dbHosts').value;
+                const user = document.getElementById('dbUser').value;
+                const password = document.getElementById('dbPassword').value;
+                const dbName = document.getElementById('dbName').value;
+                const dbConfig = document.getElementById('dbConfigPath').value;
+
+                const mode = document.getElementById('runMode').value;
+                const readerGoroutines = document.getElementById('readerGoroutines').value;
+                const consumerGoroutines = document.getElementById('consumerGoroutines').value;
+
+                const invalidFieldsLog = document.getElementById('invalidFieldsLog').value;
+                const missingDocsImportedLog = document.getElementById('missingDocsLog').value;
+
+
+                try {
+                    // Создаем FormData для отправки конфига
+                    const formData = new FormData();
+                    formData.append('test_name', testName);
+                    formData.append('config_name', configName);
+                    formData.append('config_type', configType);
+                    formData.append('hosts', hosts);
+                    formData.append('user', user);
+                    formData.append('password', password);
+                    formData.append('db_name', dbName);
+                    formData.append('db_config', dbConfig);
+                    formData.append('mode', mode);
+                    formData.append('reader_goroutines', readerGoroutines);
+                    formData.append('consumer_goroutines', consumerGoroutines);
+                    formData.append('invalid_fields_Log', invalidFieldsLog);
+                    formData.append('missing_docs_imported_log', missingDocsImportedLog);
+
+
+                    // Отправляем POST-запрос
+                    const response = await fetch('/home/tests/newConfig', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при создании конфига');
+                    }
+
+                    // Получаем созданный конфиг с сервера
+                    const newConfig = await response.json();
+
+
+                    const configLi = document.createElement('li');
+                    configLi.className = 'config-item';
+                    configLi.dataset.id = newConfig.id;
+                    configLi.textContent = newConfig.name;
+                    console.log(newConfig.name)
+                    configLi.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showConfigDescription(newConfig);
+                    });
+
+                    const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
+                    config_ul.appendChild(configLi)
+
+                } catch (error) {
+                        console.error('Ошибка:', error);
+                        testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
+                }  
+                    
+                        
             }
             
             // Обработчик нажатия кнопки "Новый тест"
@@ -516,6 +618,9 @@
                 
                 const testName = document.getElementById('testName').value;
                 const file = testFileInput.files[0];
+                const configType = document.getElementById('configType').value;
+            
+
                 
                 try {
                     
@@ -523,6 +628,7 @@
                     const formData = new FormData();
                     formData.append('name', testName);
                     formData.append('file', file);
+                    formData.append('configType', configType);
                     
                     // Отправляем POST-запрос
                     const response = await fetch('/home/tests/newTest', {
@@ -548,15 +654,7 @@
                     li.dataset.id = newTest.name;
                     li.className = 'test-item'
                     li.addEventListener('click', () => showTestDescription(newTest));
-                    const NewConfigBtn = document.createElement('button');
-                    NewConfigBtn.className = 'new-config-btn';
-                    NewConfigBtn.textContent = '+ Add';
-                    NewConfigBtn.addEventListener('click', (e) => {
-                        currentSelectedTest = newTest
-                        e.stopPropagation();
-                        newConfigModal.style.display = 'block'
-                    });
-                    li.appendChild(NewConfigBtn);
+
                     const configUl = document.createElement('ul');
                     configUl.className = 'config-list';
                     configUl.dataset.testId = newTest.name;
@@ -577,94 +675,9 @@
                     fileError.style.display = 'block';
                 }
             });
-
-
-            // Закрыть модальное окно с новым конфигом
-            closeConfigModalBtn.addEventListener('click', function() {
-                newConfigModal.style.display = 'none';
-            });
             
 
-            // Сбросить форму c новым конфигом
-            function resetConfigForm() {
-                configForm.reset();
-                fileInfo.style.display = 'none';
-                fileError.style.display = 'none';
-                fileInputLabel.textContent = 'Выберите файл с компьютера';
-            }
-
-
-
             // Обработчик отправки формы с конфигом с POST-запросом
-            configForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const testName = currentSelectedTest.name
-                const configName = document.getElementById('configName').value;
-                const file = configFileInput.files[0];
-                
-                // Проверить файл
-                if (file) {
-                    const allowedExtensions = /(\.go)$/i;
-                    if (!allowedExtensions.exec(file.name)) {
-                        fileError.textContent = 'Неверный тип файла. Пожалуйста, выберите файл с расширением .go.';
-                        fileError.style.display = 'block';
-                        return;
-                    }
-                }
-                
-                try {
-                    // Создаем FormData для отправки файла
-                    const formData = new FormData();
-                    formData.append('testName', testName);
-                    formData.append('configName', configName);
-                    formData.append('file', file);
-                    
-                    // Отправляем POST-запрос
-                    const response = await fetch('/home/tests/newConfig', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Ошибка при создании теста');
-                    }
-                    
-
-                    // Получаем созданный конфиг с сервера
-                    const newConfig = await response.json();
-
-
-
-                    const configLi = document.createElement('li');
-                    configLi.className = 'config-item';
-                    configLi.dataset.id = newConfig.id;
-                    configLi.textContent = newConfig.name;
-                    configLi.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        showConfigDescription(newConfig);
-                    });
-
-                    const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
-                    console.log(config_ul)
-                    config_ul.appendChild(configLi)
-
-
-                    //showConfigDescription(newConfig);
-                    
-                    // Сбросить форму и закрыть модальное окно
-                    resetConfigForm();
-                    newConfigModal.style.display = 'none';
-                    
-                         
-                    
-                } catch (error) {
-                    console.error('Ошибка:', error);
-                    fileError.textContent = `Ошибка при создании конфига: ${error.message}`;
-                    fileError.style.display = 'block';
-                }
-            });
-
 
 
             function showConfigDescription(config) {
@@ -683,16 +696,74 @@
                     }
                 }
 
-                 // Создать ссылку для скачивания файла
-                let fileContent = '';
-                if (config.config) {
-                    const blob = new Blob([config.config], { type: 'application/octet-stream' });
-                    const fileUrl = URL.createObjectURL(blob);
+                if (config.config_type === "toml") {
+                    const configContent = `
+                        <div class="config-display">
+                            <h3>Конфиг: ${config.name}</h3>
     
-                    const fileContent = `
-                        <div class="file-info">
-                            <strong>Прикреплённый файл:</strong> ${config.name}
-                            <a href="${fileUrl}" download="${config.name}" class="download-btn">Скачать файл</a>
+                            <div class="config-section">
+                                <h4>Основные параметры</h4>
+                                <div class="config-row">
+                                    <span class="config-label">Config Name:</span>
+                                    <span class="config-value">${config.name}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">Config Type:</span>
+                                    <span class="config-value">${config.config_type}</span>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Настройки базы данных</h4>
+                                <div class="config-row">
+                                    <span class="config-label">Hosts:</span>
+                                    <span class="config-value">${Array.isArray(config.content.hosts) ? config.content.hosts.join(', ') : config.content.hosts}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">User:</span>
+                                    <span class="config-value">${config.content.user}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">Password:</span>
+                                    <span class="config-value">${config.content.password}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">DB Name:</span>
+                                    <span class="config-value">${config.content.db_name}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">DB Config Path:</span>
+                                    <span class="config-value">${config.content.db_config}</span>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Параметры выполнения</h4>
+                                <div class="config-row">
+                                    <span class="config-label">Mode:</span>
+                                    <span class="config-value">${config.content.mode}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">Reader Goroutines:</span>
+                                    <span class="config-value">${config.content.reader_goroutines}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">Consumer Goroutines:</span>
+                                    <span class="config-value">${config.content.consumer_goroutines}</span>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Настройки логирования</h4>
+                                <div class="config-row">
+                                    <span class="config-label">Invalid Fields Log:</span>
+                                    <span class="config-value">${config.content.invalid_fields_log}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">Missing Docs Log:</span>
+                                    <span class="config-value">${config.content.missing_docs_imported_log}</span>
+                                </div>
+                            </div>
                         </div>
                         <button class="run-config-btn" onclick="runConfig('${config.id}')">RUN</button>
 
@@ -701,13 +772,13 @@
                     // Обновляем содержимое
                     testDescription.innerHTML = `
                         <h2>${config.name}</h2>
-                        ${fileContent}
+                        ${configContent}
                     `;
+                    
                 }
                 
 
             }
-
 
             async function getConfigsToAllTests() {
                 for (let j = 0; j < tests.length; j++) {
@@ -738,6 +809,8 @@
                             configLi.className = 'config-item';
                             configLi.dataset.id = config.id;
                             configLi.textContent = config.name;
+                            console.log(config)
+                            console.log(config.name)
                             configLi.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 showConfigDescription(config);
@@ -753,15 +826,11 @@
                 } 
             }
 
-
-            
+  
             // Инициализация страницы - загрузка тестов и конфигов к ним
             fetchTests();
-            
-            
+                     
         });
-
-
 
     </script>
 </body>
