@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -127,7 +126,8 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 			log.Fatal("Ошибка AddConfig: ", err)
 		}
 
-		c.JSON(http.StatusOK, gin.H{"id": newConfigId,
+		c.JSON(http.StatusOK, gin.H{
+			"id":                        newConfigId,
 			"test_name":                 testName,
 			"name":                      name,
 			"config_type":               configType,
@@ -142,6 +142,64 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 			"invalid_fields_log":        invalidFieldsLog,
 			"missing_docs_imported_log": missingDocsImportedLog,
 		})
+	} else if configType == "viper" {
+		name := c.PostForm("config_name")
+		testName := c.PostForm("test_name")
+		port := c.PostFormArray("port")
+		maxPercentCpuUsage := c.PostForm("max_percent_cpu_usage")
+		requestTimeoutSeconds := c.PostForm("request_timeout_seconds")
+		endpointUrl := c.PostForm("endpoint_url")
+		urlPath := c.PostForm("url_path")
+		serviceName := c.PostForm("service_name")
+		dbUrls := c.PostForm("db_urls")
+		expirationMin := c.PostForm("expiration_min")
+		debugMode := c.PostForm("debug_mode")
+		encryptionKey := c.PostForm("encryption_key")
+
+		content := map[string]interface{}{
+			"port":                    port,
+			"max_percent_cpu_usage":   maxPercentCpuUsage,
+			"request_timeout_seconds": requestTimeoutSeconds,
+			"endpoint_url":            endpointUrl,
+			"url_path":                urlPath,
+			"service_name":            serviceName,
+			"db_urls":                 dbUrls,
+			"expiration_min":          expirationMin,
+			"debug_mode":              debugMode,
+			"encryption_key":          encryptionKey,
+		}
+
+		jsonData, err := json.Marshal(content)
+		if err != nil {
+			log.Fatal("failed to marshal config: ", err)
+		}
+
+		config := core.Config{TestName: testName, Name: name, ConfigType: configType, Content: jsonData}
+
+		newConfigId, err := h.service.AddConfig(c, &config)
+		if err != nil {
+			log.Fatal("Ошибка AddConfig: ", err)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":          newConfigId,
+			"test_name":   testName,
+			"name":        name,
+			"config_type": configType,
+
+			"content": gin.H{
+				"port":                    port,
+				"max_percent_cpu_usage":   maxPercentCpuUsage,
+				"request_timeout_seconds": requestTimeoutSeconds,
+				"endpoint_url":            endpointUrl,
+				"url_path":                urlPath,
+				"service_name":            serviceName,
+				"db_urls":                 dbUrls,
+				"expiration_min":          expirationMin,
+				"debug_mode":              debugMode,
+				"encryption_key":          encryptionKey,
+			},
+		})
 	}
 
 }
@@ -153,6 +211,5 @@ func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
 		log.Fatal("Ошибка метода GetAllConfigsToTest: ", err)
 	}
 
-	fmt.Println(configs)
 	c.JSON(http.StatusOK, configs)
 }

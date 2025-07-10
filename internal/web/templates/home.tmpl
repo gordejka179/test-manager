@@ -99,6 +99,10 @@
             font-weight: bold;
         }
 
+        .config-item {
+            line-height: 1.2;
+        }
+
         .config-item:hover {
             background-color: #c0c0c0;
         }
@@ -165,20 +169,7 @@
             color: black;
         }
 
-        .closeConfigModal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .closeConfigModal:hover {
-            color: black;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
+    
         .form-group label {
             display: block;
             margin-bottom: 5px;
@@ -257,6 +248,16 @@
             position: relative;
         }
 
+        h4{
+            margin-top: 7px;
+            margin-bottom: 7px;
+        }
+
+
+
+
+        
+
     </style>
 </head>
 <body>
@@ -291,8 +292,8 @@
                 <label for="configType">Тип конфигурации:</label>
                 <select id="configType" name="configType" class="form-select" required>
                     <option value="" disabled selected>Выберите тип...</option>
-                    <option value="toml">TOML</option>
-                    <option value="viper">Viper</option>
+                    <option value="toml">toml</option>
+                    <option value="viper">viper</option>
                 </select>
             </div>
             <div class="form-group">
@@ -417,8 +418,8 @@
                     
                     fileContent = `
                         <div class="file-info">
-                            <strong>Прикреплённый файл:</strong> ${test.name}
-                            <strong>Формат конфигов к тесту:</strong> ${test.config_type}
+                            <p><strong>Прикреплённый файл:</strong> ${test.name}</p>
+                            <p><strong>Формат конфигов к тесту:</strong> ${test.config_type}</p>
                             <a href="${fileUrl}" download="${test.name}" class="download-btn">Скачать файл</a>
                         </div>
                     `;
@@ -436,7 +437,7 @@
                                     <input type="text" id="configName" value="example">
                                 </div>
                                 <fieldset>
-                                    <legend>Database Settings</legend>
+                                    <legend>Database Parameters</legend>
                                     <div class="form-group">
                                         <label for="dbHosts">Hosts (comma separated):</label>
                                         <input type="text" id="dbHosts" value='["mongodb1.example.com:27017", "mongodb2.example.com:27017"]'>
@@ -476,7 +477,7 @@
                                 </fieldset>
                     
                                 <fieldset>
-                                    <legend>Logging Configuration</legend>
+                                    <legend>Logging Parameters</legend>
                                     <div class="form-group">
                                         <label for="invalidFieldsLog">Invalid Fields Log:</label>
                                         <input type="text" id="invalidFieldsLog" value="/var/log/myapp/invalid_fields.log">
@@ -503,59 +504,65 @@
                         <div class="config-form">
                         <h3>Конфигурация</h3>
                             <form id="configForm">
-                                <fieldset>
-                                    <legend>Database Settings</legend>
-                                    <div class="form-group">
-                                        <label for="configName">configName:</label>
+                                <div class="form-group">
+                                        <label for="configName">СonfigName:</label>
                                         <input type="text" id="configName" value="example">
+                                </div>
+                                <fieldset>
+                                    <legend>Server Parameters</legend>
+                                    <div class="form-group">
+                                        <label for="Port">Port:</label>
+                                        <input type="text" id="port" value='8080'>
                                     </div>
                                     <div class="form-group">
-                                        <label for="dbHosts">Hosts (comma separated):</label>
-                                        <input type="text" id="dbHosts" value='["mongodb1.example.com:27017", "mongodb2.example.com:27017"]'>
+                                        <label for="maxPercentCpuUsage">MaxPercentCpuUsage:</label>
+                                        <input type="text" id="maxPercentCpuUsage" value="95.0">
                                     </div>
                                     <div class="form-group">
-                                        <label for="dbUser">User:</label>
-                                        <input type="text" id="dbUser" value="admin">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="dbPassword">Password:</label>
-                                        <input type="password" id="dbPassword" value="securepassword">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="dbName">Database Name:</label>
-                                        <input type="text" id="dbName" value="my_database">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="dbConfigPath">DB Config Path:</label>
-                                        <input type="text" id="dbConfigPath" value="/path/to/db_config.yml">
+                                        <label for="requestTimeoutSeconds">RequestTimeoutSeconds:</label>
+                                        <input type="text" id="requestTimeoutSeconds" value="30">
                                     </div>
                                 </fieldset>
                     
                                 <fieldset>
-                                    <legend>Runtime Parameters</legend>
+                                    <legend>Tracer Parameters</legend>
                                     <div class="form-group">
-                                        <label for="runMode">Mode (5=CheckAllKeys, 6=CheckAllFields):</label>
-                                        <input type="number" id="runMode" value="5" min="5" max="6">
+                                        <label for="endpointUrl">EndpointUrl:</label>
+                                        <input type="text" id="endpointUrl" value="http://localhost:8080">
                                     </div>
                                     <div class="form-group">
-                                        <label for="readerGoroutines">Reader Goroutines:</label>
-                                        <input type="number" id="readerGoroutines" value="4" min="1">
+                                        <label for="urlPath">UrlPath:</label>
+                                        <input type="text" id="urlPath" value="/internal/service">
                                     </div>
                                     <div class="form-group">
-                                        <label for="consumerGoroutines">Consumer Goroutines:</label>
-                                    <input type="number" id="consumerGoroutines" value="8" min="1">
+                                        <label for="serviceName">ServiceName:</label>
+                                    <input type="text" id="serviceName" value="my_service">
                                     </div>
                                 </fieldset>
                     
                                 <fieldset>
-                                    <legend>Logging Configuration</legend>
+                                    <legend>Сache Parameters</legend>
                                     <div class="form-group">
-                                        <label for="invalidFieldsLog">Invalid Fields Log:</label>
-                                        <input type="text" id="invalidFieldsLog" value="/var/log/myapp/invalid_fields.log">
+                                        <label for="dbUrls">DbUrls (comma separated):</label>
+                                        <input type="text" id="dbUrls" value='["localhost:5432", "localhost:5433"]'>
                                     </div>
+
                                     <div class="form-group">
-                                        <label for="missingDocsLog">Missing Docs Log:</label>
-                                        <input type="text" id="missingDocsLog" value="/var/log/myapp/missing_docs.log">
+                                        <label for="expirationMin">ExpirationMin:</label>
+                                        <input type="text" id="expirationMin" value="30">
+                                    </div>
+                                </fieldset>
+
+                                <fieldset>
+                                    <legend>Rest Parameters</legend>
+                                    <div class="form-group">
+                                        <label for="debugMode">DebugMode:</label>
+                                        <input type="text" id="debugMode" value='false'>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="encryptionKey">EncryptionKey:</label>
+                                        <input type="password" id="encryptionKey" value="secret_key">
                                     </div>
                                 </fieldset>
 
@@ -575,20 +582,18 @@
                 const testName = test.name;
                 const configType = test.config_type;
 
+                if (configType === "toml"){
                 const configName = document.querySelector(`.form-group input[id=configName]`).value;
                 const hosts = document.getElementById('dbHosts').value;
                 const user = document.getElementById('dbUser').value;
                 const password = document.getElementById('dbPassword').value;
                 const dbName = document.getElementById('dbName').value;
                 const dbConfig = document.getElementById('dbConfigPath').value;
-
                 const mode = document.getElementById('runMode').value;
                 const readerGoroutines = document.getElementById('readerGoroutines').value;
                 const consumerGoroutines = document.getElementById('consumerGoroutines').value;
-
                 const invalidFieldsLog = document.getElementById('invalidFieldsLog').value;
                 const missingDocsImportedLog = document.getElementById('missingDocsLog').value;
-
 
                 try {
                     // Создаем FormData для отправки конфига
@@ -626,7 +631,6 @@
                     configLi.className = 'config-item';
                     configLi.dataset.id = newConfig.id;
                     configLi.textContent = newConfig.name;
-                    console.log(newConfig.name)
                     configLi.addEventListener('click', (e) => {
                         e.stopPropagation();
                         showConfigDescription(newConfig);
@@ -638,7 +642,75 @@
                 } catch (error) {
                         console.error('Ошибка:', error);
                         testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
-                }  
+                }
+                }
+
+
+                if (configType === "viper"){
+                const configName = document.querySelector(`.form-group input[id=configName]`).value;
+                const port = document.getElementById('port').value;
+                const maxPercentCpuUsage = document.getElementById('maxPercentCpuUsage').value;
+                const requestTimeoutSeconds = document.getElementById('requestTimeoutSeconds').value;
+                const endpointUrl = document.getElementById('endpointUrl').value;
+                const urlPath = document.getElementById('urlPath').value;
+                const serviceName = document.getElementById('serviceName').value;
+                const dbUrls = document.getElementById('dbUrls').value;
+                const expirationMin = document.getElementById('expirationMin').value;
+                const debugMode = document.getElementById('debugMode').value;
+                const encryptionKey = document.getElementById('encryptionKey').value;
+
+                try {
+                    // Создаем FormData для отправки конфига
+                    const formData = new FormData();
+                    formData.append('test_name', testName);
+                    formData.append('config_name', configName);
+                    formData.append('config_type', configType);
+                    formData.append('port', port);
+                    formData.append('max_percent_cpu_usage', maxPercentCpuUsage);
+                    formData.append('request_timeout_seconds', requestTimeoutSeconds);
+                    formData.append('endpoint_url', endpointUrl);
+                    formData.append('url_path', urlPath);
+                    formData.append('service_name', serviceName);
+                    formData.append('db_urls', dbUrls);
+                    formData.append('expiration_min', expirationMin);
+                    formData.append('debug_mode', debugMode);
+                    formData.append('encryption_key', encryptionKey);
+
+
+                    // Отправляем POST-запрос
+                    const response = await fetch('/home/tests/newConfig', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при создании конфига');
+                    }
+
+                    // Получаем созданный конфиг с сервера
+                    const newConfig = await response.json();
+
+
+                    const configLi = document.createElement('li');
+                    configLi.className = 'config-item';
+                    configLi.dataset.id = newConfig.id;
+                    configLi.textContent = newConfig.name;
+                    configLi.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showConfigDescription(newConfig);
+                    });
+
+                    const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
+                    config_ul.appendChild(configLi)
+
+                } catch (error) {
+                        console.error('Ошибка:', error);
+                        testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
+                }
+
+                }
+
+
                     
                         
             }
@@ -771,41 +843,32 @@
                 if (config.config_type === "toml") {
                     const configContent = `
                         <div class="config-display">
-                            <h3>Конфиг: ${config.name}</h3>
+                            <span class="config-label">Config Type:</span>
+                            <span class="config-value">${config.config_type}</span>
+                            <br>
+                            <br>
     
-                            <div class="config-section">
-                                <h4>Основные параметры</h4>
-                                <div class="config-row">
-                                    <span class="config-label">Config Name:</span>
-                                    <span class="config-value">${config.name}</span>
-                                </div>
-                                <div class="config-row">
-                                    <span class="config-label">Config Type:</span>
-                                    <span class="config-value">${config.config_type}</span>
-                                </div>
-                            </div>
-
                             <div class="config-section">
                                 <h4>Настройки базы данных</h4>
                                 <div class="config-row">
                                     <span class="config-label">Hosts:</span>
-                                    <span class="config-value">${Array.isArray(config.hosts) ? config.hosts.join(', ') : config.hosts}</span>
+                                    <span class="config-value">${Array.isArray(config.content.hosts) ? config.content.hosts.join(', ') : config.content.hosts}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">User:</span>
-                                    <span class="config-value">${config.user}</span>
+                                    <span class="config-value">${config.content.user}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Password:</span>
-                                    <span class="config-value">${config.password}</span>
+                                    <span class="config-value">${config.content.password}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">DB Name:</span>
-                                    <span class="config-value">${config.db_name}</span>
+                                    <span class="config-value">${config.content.db_name}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">DB Config Path:</span>
-                                    <span class="config-value">${config.db_config}</span>
+                                    <span class="config-value">${config.content.db_config}</span>
                                 </div>
                             </div>
 
@@ -813,15 +876,15 @@
                                 <h4>Параметры выполнения</h4>
                                 <div class="config-row">
                                     <span class="config-label">Mode:</span>
-                                    <span class="config-value">${config.mode}</span>
+                                    <span class="config-value">${config.content.mode}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Reader Goroutines:</span>
-                                    <span class="config-value">${config.reader_goroutines}</span>
+                                    <span class="config-value">${config.content.reader_goroutines}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Consumer Goroutines:</span>
-                                    <span class="config-value">${config.consumer_goroutines}</span>
+                                    <span class="config-value">${config.content.consumer_goroutines}</span>
                                 </div>
                             </div>
 
@@ -829,11 +892,87 @@
                                 <h4>Настройки логирования</h4>
                                 <div class="config-row">
                                     <span class="config-label">Invalid Fields Log:</span>
-                                    <span class="config-value">${config.invalid_fields_log}</span>
+                                    <span class="config-value">${config.content.invalid_fields_log}</span>
                                 </div>
                                 <div class="config-row">
                                     <span class="config-label">Missing Docs Log:</span>
-                                    <span class="config-value">${config.missing_docs_imported_log}</span>
+                                    <span class="config-value">${config.content.missing_docs_imported_log}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="run-config-btn" onclick="runConfig('${config.id}')">RUN</button>
+
+                    `;
+    
+                    // Обновляем содержимое
+                    testDescription.innerHTML = `
+                        <h2>${config.name}</h2>
+                        ${configContent}
+                    `;
+                    
+                }
+
+                if (config.config_type === "viper") {
+                    const configContent = `
+                        <div class="config-display">
+                            <span class="config-label">Config Type:</span>
+                            <span class="config-value">${config.config_type}</span>
+                            <br>
+                            <br>
+                            <div class="config-section">
+                                <h4>Server Parameters</h4>
+                                <div class="config-row">
+                                    <span class="config-label">Port:</span>
+                                    <span class="config-value">${config.content.port}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">MaxPercentCpuUsage:</span>
+                                    <span class="config-value">${config.content.max_percent_cpu_usage}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">RequestTimeoutSeconds:</span>
+                                    <span class="config-value">${config.content.request_timeout_seconds}</span>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Tracer Parameters</h4>
+                                <div class="config-row">
+                                    <span class="config-label">EndpointUrl</span>
+                                    <span class="config-value">${config.content.endpoint_url}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">UrlPath:</span>
+                                    <span class="config-value">${config.content.url_path}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">ServiceName:</span>
+                                    <span class="config-value">${config.content.service_name}</span>
+                                </div>
+                                
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Сache Parameters</h4>
+                                <div class="config-row">
+                                    <span class="config-label">DBUrls:</span>
+                                    <span class="config-value">${config.content.db_urls}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">ExpirationMin:</span>
+                                    <span class="config-value">${config.content.expiration_min}</span>
+                                </div>
+                            </div>
+
+                            <div class="config-section">
+                                <h4>Rest Parameters</h4>
+                                <div class="config-row">
+                                    <span class="config-label">debug_mode:</span>
+                                    <span class="config-value">${config.content.debug_mode}</span>
+                                </div>
+                                <div class="config-row">
+                                    <span class="config-label">EncryptionKey:</span>
+                                    <span class="config-value">${config.content.encryption_key}</span>
                                 </div>
                             </div>
                         </div>
@@ -881,8 +1020,6 @@
                             configLi.className = 'config-item';
                             configLi.dataset.id = config.id;
                             configLi.textContent = config.name;
-                            console.log(config)
-                            console.log(config.name)
                             configLi.addEventListener('click', (e) => {
                                 e.stopPropagation();
                                 showConfigDescription(config);
