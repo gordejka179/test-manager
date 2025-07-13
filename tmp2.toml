@@ -1,0 +1,17 @@
+[database]
+  dbConfig = ""
+  dbName = ""
+  hosts = []
+  password = ""
+  user = ""
+
+[log]
+  invalidFieldsLog = ""
+  missingDocsImportedLog = ""
+
+[run]
+  consumerGoroutines = 0
+  readerGoroutines = 0
+  [run.mode]
+    dad = 0
+    mom = 0

@@ -3,9 +3,10 @@ package core
 import "encoding/json"
 
 type Test struct {
-	Name       string `json:"name"`
-	ConfigType string `json:"config_type"`
-	Binary     []byte `json:"binary"`
+	Name       string          `json:"name"`
+	ConfigType string          `json:"config_type"`
+	Binary     []byte          `json:"binary"`
+	Template   json.RawMessage `json:"template"`
 }
 
 type Config struct {
