@@ -16,7 +16,8 @@ type TestRepository interface {
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
 	DeleteConfig(ctx context.Context, id string) error
-	GetLogs(ctx context.Context, testName string, configID string) ([]core.Log, error)
+	GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error)
+	AddLog(ctx context.Context, log *core.Log) error
 }
 
 type TestService struct {
@@ -63,6 +64,10 @@ func (s *TestService) DeleteConfig(ctx context.Context, testID string) error {
 	return s.repo.DeleteConfig(ctx, testID)
 }
 
-func (s *TestService) GetLogs(ctx context.Context, testID string, configID string) ([]core.Log, error) {
-	return s.repo.GetLogs(ctx, testID, configID)
+func (s *TestService) GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error) {
+	return s.repo.GetLogsToConfig(ctx, configID)
+}
+
+func (s *TestService) AddLog(ctx context.Context, log *core.Log) error {
+	return s.repo.AddLog(ctx, log)
 }

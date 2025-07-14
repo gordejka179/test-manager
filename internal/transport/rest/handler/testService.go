@@ -30,7 +30,8 @@ type TestService interface {
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
 	DeleteConfig(ctx context.Context, id string) error
-	GetLogs(ctx context.Context, testName string, configID string) ([]core.Log, error)
+	GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error)
+	AddLog(ctx context.Context, log *core.Log) error
 }
 
 type TestServiceHandler struct {
@@ -353,6 +354,17 @@ func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, configs)
+}
+
+func (h *TestServiceHandler) GetLogsToConfig(c *gin.Context) {
+	configId := c.PostForm("config_id")
+	logs, err := h.service.GetLogsToConfig(c.Request.Context(), configId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Fatal(err)
+		return
+	}
+	c.JSON(http.StatusOK, logs)
 }
 
 func GenerateForm(config map[string]interface{}, prefix string, w *strings.Builder) {

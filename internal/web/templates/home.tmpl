@@ -121,7 +121,7 @@
             flex-direction: column;
             min-height: 100%; 
             position: relative; 
-            padding-bottom: 60px;
+            padding-bottom: 5px;
         }
 
         .file-info { 
@@ -248,6 +248,25 @@
             background-color: #45a049;
         }
 
+    
+        .history-btn {
+            position: absolute;
+            right: 20px;
+            up: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+        }
+
+        .history-btn:hover {
+            background-color: #45a049;
+        }
+
         .content {
             position: relative;
         }
@@ -257,10 +276,20 @@
             margin-bottom: 7px;
         }
 
+        .modal-history-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* Центрирование */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 50%; /* Ограничение ширины */
+            border-radius: 5px;
+            max-height: 80vh; /* Ограничение высоты */
+            overflow-y: auto; /* Прокрутка при необходимости */
+        }
 
 
 
-        
+
 
     </style>
 </head>
@@ -330,7 +359,23 @@
             <button type="submit" class="submit-btn">Создать тест</button>
         </form>
     </div>
-</div>
+    </div>
+
+     <!-- Модальное окно для списка логов -->
+    <div id="logModal" class="modal">
+        <div class="modal-history-content">
+            <span class="closeLogModal">&times;</span>
+            <div class="log-container">
+                <ul class="log-list" id="logList">
+                    <!-- Логи будут добавлены динамически -->
+                </ul>
+
+                <div class="log-details" id="logDetails">
+                    <p>Выберите лог для просмотра деталей.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <script>
@@ -355,7 +400,9 @@
             const configFileSize = document.getElementById('configFileSize');
             const configFileError = document.getElementById('configFileError');
 
-            
+            const logList = document.getElementById('logList');
+            const logModal = document.getElementById('logModal');
+   
             // Переменная для хранения текущего выбранного теста
             let currentSelectedTest = null;
 
@@ -750,9 +797,14 @@
                 }
 
                 const configDescription = createDescription(config.content)
+                const historyBtn = document.createElement('button');
+                historyBtn.className = 'history-btn';
+                historyBtn.textContent = 'History';
+                historyBtn.addEventListener('click', () => getHistoryToConfig(config.id));
     
                 // Обновляем содержимое
                 testDescription.innerHTML = `
+                    <div id="history-btn-container"></div>
                     <h2>${config.name}</h2>
                     <span class="config-label">Config Type:</span>
                     <span class="config-value">${config.config_type}</span>
@@ -761,6 +813,8 @@
                     ${configDescription}
                     <button class="run-config-btn" onclick="runConfig('${config.id}')">RUN</button>
                 `;
+
+                document.getElementById('history-btn-container').appendChild(historyBtn);
             }
 
             async function getConfigsToAllTests() {
@@ -805,6 +859,74 @@
                     }
                         
                 } 
+            }
+
+            //Получаем список логов к конфигу
+            async function getHistoryToConfig(configId) {
+                try {
+                    const formData = new FormData();
+                    formData.append('config_id', configId);
+                    // Отправляем POST-запрос
+                    const response = await fetch('/home/tests/configHistory', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Ошибка при создании теста');
+                    }
+                    
+                    // Получаем созданный список логов с сервера
+                    const logs = await response.json();
+
+                    if (logs != null){
+                        logs.forEach(log => {
+                            const li = document.createElement('li');
+                            li.className = 'log-item'
+                            li.textContent = log.number;
+                            li.dataset.id = log.config_id;
+                            li.addEventListener('click', () => showLogDescription(log));
+                            testList.appendChild(li);  
+                        });
+                    }
+                                    
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                }
+
+                logModal.style.display = 'block';
+
+            }
+
+
+            // Обработчик нажатия кнопки "Новый тест"
+            newTestBtn.addEventListener('click', function() {
+                newTestModal.style.display = 'block';
+            });
+            
+            //Закрыть форму с логом
+            function closeLogModal() {
+                document.getElementById('logModal').style.display = 'none';
+            }
+
+            // Назначение обработчика события на крестик закрытия
+            document.querySelector('.closeLogModal').addEventListener('click', closeLogModal);
+
+            function showLogDescription(log) {
+                console.log(log);
+    
+                // Извлекаем нужные поля из объекта log
+                const createdAt = log.created_at
+                const output = log.output
+    
+                // Формируем HTML для отображения
+                const logDetailsHTML = `
+                    <p><strong>Дата:</strong> ${createdAt}</p>
+                    <p><strong>Вывод:</strong> ${output}</p>
+                `;
+    
+                // Вставляем сформированный HTML в элемент logDetails
+                document.getElementById('logDetails').innerHTML = logDetailsHTML;
             }
 
   

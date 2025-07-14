@@ -51,12 +51,9 @@ func createTables(db *sql.DB) error {
 
 		CREATE TABLE IF NOT EXISTS test_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			test_name TEXT NOT NULL,
 			config_id TEXT NOT NULL,
-			output TEXT,         
-			
-			FOREIGN KEY (test_name) REFERENCES tests(name) ON DELETE CASCADE,
-
+			output TEXT,       
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (config_id) REFERENCES test_configs(id) ON DELETE CASCADE
 		);
 	`)
@@ -212,11 +209,11 @@ func (s *SQLiteStorage) DeleteConfig(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *SQLiteStorage) GetLogs(ctx context.Context, testName string, configID string) ([]core.Log, error) {
+func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, test_name, config_id, output
-		FROM test_logs WHERE test_name = ? AND config_id = ?`,
-		testName, configID)
+		`SELECT id, config_id, output
+		FROM test_logs WHERE config_id = ?`,
+		configID)
 
 	if err != nil {
 		return nil, err
@@ -227,7 +224,7 @@ func (s *SQLiteStorage) GetLogs(ctx context.Context, testName string, configID s
 	for rows.Next() {
 		var log core.Log
 		if err := rows.Scan(
-			&log.ID, &log.TestName, &log.ConfigID, &log.Output,
+			&log.ID, &log.ConfigID, &log.Output,
 		); err != nil {
 			return nil, err
 		}
@@ -235,4 +232,34 @@ func (s *SQLiteStorage) GetLogs(ctx context.Context, testName string, configID s
 	}
 
 	return logs, nil
+}
+
+func (s *SQLiteStorage) AddLog(ctx context.Context, log *core.Log) error {
+	row, err := s.DB.QueryContext(ctx, `
+    SELECT *
+    FROM test_logs
+    WHERE config_id = ? AND number = (SELECT MAX(number) FROM test_logs WHERE config_id = ?)`,
+		log.ConfigID, log.ConfigID)
+	if err != nil {
+		return err
+	}
+
+	num := 0
+
+	if row != nil {
+		if err := row.Scan(&num); err != nil {
+			return err
+		}
+	}
+	num += 1
+
+	_, err = s.DB.ExecContext(ctx,
+		`INSERT INTO test_logs (config_id, number, output)
+			VALUES (?, ?, ?)`,
+		log.ID, num, log.Output)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

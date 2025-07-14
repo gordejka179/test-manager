@@ -1,6 +1,9 @@
 package core
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Test struct {
 	Name       string          `json:"name"`
@@ -18,8 +21,9 @@ type Config struct {
 }
 
 type Log struct {
-	ID       int    `json:"id"`
-	TestName string `json:"test_name"`
-	ConfigID string `json:"config_id"`
-	Output   string `json:"output"`
+	ID        int       `json:"id"`
+	ConfigID  string    `json:"config_id"`
+	Number    int       `json:"number"`
+	CreatedAt time.Time `json:"created_at"`
+	Output    string    `json:"output"`
 }
