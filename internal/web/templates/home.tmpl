@@ -35,11 +35,7 @@
             border-right: 1px solid #ddd;
             overflow-y: auto;
         }
-        .content {
-            width: 70%;
-            padding: 20px;
-            overflow-y: auto;
-        }
+
         h2 {
             margin-top: 0;
             color: #333;
@@ -147,7 +143,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1;
+            z-index: 100;
             left: 0;
             top: 0;
             width: 100%;
@@ -230,24 +226,36 @@
         }
 
 
-        .content .run-config-btn {
-            position: absolute;
-            right: 20px;
-            bottom: 20px;
-            padding: 10px 20px;
+        .content {
+            position: relative;
+            width: 70%;
+            padding: 20px;
+            overflow-y: auto;
+            min-height: 100%;
+            box-sizing: border-box;
+        }
+
+        .run-config-btn {
+            display: inline-block;
+            padding: 8px 16px;  
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            z-index: 10;
-        }
+            margin-left: auto; 
+            margin-top: 10px;  
+        }  
 
-        .content .run-config-btn:hover {
+        .run-config-btn:hover {
             background-color: #45a049;
         }
 
+
+
+        .test-description {
+            position: relative;
+        }
     
         .history-btn {
             position: absolute;
@@ -267,9 +275,6 @@
             background-color: #45a049;
         }
 
-        .content {
-            position: relative;
-        }
 
         h4{
             margin-top: 7px;
@@ -278,13 +283,13 @@
 
         .modal-history-content {
             background-color: #fefefe;
-            margin: 10% auto; /* Центрирование */
+            margin: 10% auto; 
             padding: 20px;
             border: 1px solid #888;
-            width: 50%; /* Ограничение ширины */
+            width: 50%; 
             border-radius: 5px;
-            max-height: 80vh; /* Ограничение высоты */
-            overflow-y: auto; /* Прокрутка при необходимости */
+            max-height: 80vh; 
+            overflow-y: auto; 
         }
 
 
@@ -797,10 +802,17 @@
                 }
 
                 const configDescription = createDescription(config.content)
+                //Кнопка с логами
                 const historyBtn = document.createElement('button');
                 historyBtn.className = 'history-btn';
                 historyBtn.textContent = 'History';
                 historyBtn.addEventListener('click', () => getHistoryToConfig(config.id));
+
+                //Кнопка для запуска
+                const runBtn = document.createElement('button');
+                runBtn.className = 'run-btn';
+                runBtn.textContent = 'Run';
+                runBtn.addEventListener('click', () => runTest(config.id));
     
                 // Обновляем содержимое
                 testDescription.innerHTML = `
@@ -811,10 +823,11 @@
                     <br>
                     <br>
                     ${configDescription}
-                    <button class="run-config-btn" onclick="runConfig('${config.id}')">RUN</button>
+                    <div id="run-btn-container"></div>
                 `;
 
                 document.getElementById('history-btn-container').appendChild(historyBtn);
+                document.getElementById('run-btn-container').appendChild(runBtn);
             }
 
             async function getConfigsToAllTests() {
@@ -929,7 +942,31 @@
                 document.getElementById('logDetails').innerHTML = logDetailsHTML;
             }
 
-  
+
+            async function runTest(configId){
+                try {
+                    const formData = new FormData();
+                    formData.append('configId', configID);
+
+                    const response = await fetch('/home/tests/runTest', {
+                        method: 'POST', 
+                        body: formData
+                    })
+
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка при загрузке конфигов к тесту');
+                    }
+
+                    //получаем текст лога
+                    let textLog = await response.json();
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
+                }
+
+            }
+
             // Инициализация страницы - загрузка тестов и конфигов к ним
             fetchTests();
                      

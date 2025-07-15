@@ -3,10 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +14,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 	"github.com/gordejka179/test-manager/internal/core"
+	"github.com/gordejka179/test-manager/pkg"
 )
 
 type TestService interface {
@@ -85,7 +82,7 @@ func (h *TestServiceHandler) AddTest(c *gin.Context) {
 
 	configFileBytes, err := io.ReadAll(configFile)
 
-	data, err := ParseStructsFromFile(configFileBytes, structureName)
+	data, err := pkg.ParseStructsFromFile(configFileBytes, structureName)
 
 	//fmt.Println(string(configFileBytes))
 	// Выводим результат
@@ -105,123 +102,6 @@ func (h *TestServiceHandler) AddTest(c *gin.Context) {
 
 }
 
-func ParseStructsFromFile(src []byte, rootStructName string) (map[string]interface{}, error) {
-
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse file: %v", err)
-	}
-
-	// Собираем информацию о структурах и типах
-	structs := make(map[string]*ast.StructType)
-	typeDefs := make(map[string]ast.Expr)
-	constValues := make(map[string]interface{})
-
-	for _, decl := range f.Decls {
-		switch d := decl.(type) {
-		case *ast.GenDecl:
-			if d.Tok == token.TYPE {
-				for _, spec := range d.Specs {
-					typeSpec := spec.(*ast.TypeSpec)
-					if structType, ok := typeSpec.Type.(*ast.StructType); ok {
-						structs[typeSpec.Name.Name] = structType
-					} else {
-						typeDefs[typeSpec.Name.Name] = typeSpec.Type
-					}
-				}
-			} else if d.Tok == token.CONST {
-				for _, spec := range d.Specs {
-					valueSpec := spec.(*ast.ValueSpec)
-					for i, name := range valueSpec.Names {
-						if len(valueSpec.Values) > i {
-							if basicLit, ok := valueSpec.Values[i].(*ast.BasicLit); ok {
-								switch basicLit.Kind {
-								case token.INT:
-									val, _ := strconv.Atoi(basicLit.Value)
-									constValues[name.Name] = val
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Проверяем, что корневая структура существует
-	if _, exists := structs[rootStructName]; !exists {
-		return nil, fmt.Errorf("root struct '%s' not found in file", rootStructName)
-	}
-
-	// Рекурсивная функция для построения map
-	var buildMap func(structName string) map[string]interface{}
-	buildMap = func(structName string) map[string]interface{} {
-		// Проверяем, является ли тип структурой
-		if structType, exists := structs[structName]; exists {
-			result := make(map[string]interface{})
-			for _, field := range structType.Fields.List {
-				if len(field.Names) == 0 {
-					continue
-				}
-
-				fieldName := field.Names[0].Name
-				tag := ""
-				if field.Tag != nil {
-					tagValue := strings.Trim(field.Tag.Value, "`")
-					tagParts := strings.Split(tagValue, ":")
-					if len(tagParts) > 1 {
-						tag = strings.Trim(strings.Split(tagParts[1], "\"")[1], "\"")
-					}
-				}
-
-				if tag == "" {
-					tag = strings.ToLower(fieldName)
-				}
-
-				// Обрабатываем тип поля
-				switch t := field.Type.(type) {
-				case *ast.Ident:
-					if _, isStruct := structs[t.Name]; isStruct {
-						result[tag] = buildMap(t.Name)
-					} else if _, isType := typeDefs[t.Name]; isType {
-						// Пользовательский тип (например, RunMode)
-						result[tag] = 0 // нулевое значение для числового типа
-					} else {
-						switch t.Name {
-						case "string":
-							result[tag] = ""
-						case "int", "int8", "int16", "int32", "int64",
-							"uint", "uint8", "uint16", "uint32", "uint64":
-							result[tag] = 0
-						case "float32", "float64":
-							result[tag] = 0.0
-						case "bool":
-							result[tag] = false
-						default:
-							result[tag] = nil
-						}
-					}
-				case *ast.ArrayType:
-					result[tag] = []interface{}{}
-				case *ast.SelectorExpr:
-					result[tag] = nil
-				case *ast.StarExpr:
-					result[tag] = nil
-				case *ast.MapType:
-					result[tag] = make(map[string]interface{})
-				default:
-					result[tag] = nil
-				}
-			}
-			return result
-		}
-		return nil
-	}
-
-	return buildMap(rootStructName), nil
-}
-
 func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 	if err := c.Request.ParseForm(); err != nil {
 		c.String(http.StatusBadRequest, "Bad request")
@@ -232,7 +112,6 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 	data := convertToMap(c.Request.PostForm)
 
 	testName, ok := data["test_name"].(string)
-	fmt.Printf("%T", data["test_name"])
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Имя теста не должно быть числом",
@@ -275,8 +154,6 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 
 	c.JSON(http.StatusOK, config)
 
-	//fmt.Printf("%#v\n", data)
-
 	//saveToTOML("tmp.toml", data)
 }
 
@@ -287,7 +164,7 @@ func convertToMap(v url.Values) map[string]interface{} {
 		if len(values) == 0 {
 			continue
 		}
-		value := values[0] // Берём первое значение
+		value := values[0]
 		setNestedValue(&data, key, value)
 	}
 	return data
@@ -296,14 +173,12 @@ func setNestedValue(m *map[string]interface{}, key string, value interface{}) {
 	keys := strings.Split(key, ".")
 	for i, k := range keys {
 		if i == len(keys)-1 {
-			// Последний ключ — записываем значение
 			(*m)[k] = parseValue(value.(string))
 		} else {
 			// Если вложенного map нет — создаём
 			if _, exists := (*m)[k]; !exists {
 				(*m)[k] = make(map[string]interface{})
 			}
-			// Получаем указатель на вложенную map
 			nested := (*m)[k].(map[string]interface{})
 			setNestedValue(&nested, strings.Join(keys[i+1:], "."), value)
 			return
@@ -365,37 +240,4 @@ func (h *TestServiceHandler) GetLogsToConfig(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, logs)
-}
-
-func GenerateForm(config map[string]interface{}, prefix string, w *strings.Builder) {
-	for key, value := range config {
-		fullKey := key
-		if prefix != "" {
-			fullKey = prefix + "." + key
-		}
-
-		switch v := value.(type) {
-		case map[string]interface{}: // Вложенная структура
-			w.WriteString(fmt.Sprintf("<fieldset><legend>%s</legend>\n", key))
-			GenerateForm(v, fullKey, w)
-			w.WriteString("</fieldset>\n")
-
-		default: // Обычное поле
-			w.WriteString(fmt.Sprintf(
-				"<label for='%s'>%s</label>\n"+
-					"<input type='text' id='%s' name='%s' value='%v'><br>\n",
-				fullKey, key, fullKey, fullKey, v,
-			))
-		}
-	}
-}
-
-func CreateHTMLForm(config map[string]interface{}) string {
-	var html strings.Builder
-	html.WriteString("<form method='POST'>\n")
-
-	GenerateForm(config, "", &html)
-
-	html.WriteString("<input type='submit' value='Save'>\n</form>")
-	return html.String()
 }
