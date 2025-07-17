@@ -235,7 +235,7 @@
             box-sizing: border-box;
         }
 
-        .run-config-btn {
+        .run-btn {
             display: inline-block;
             padding: 8px 16px;  
             background-color: #4CAF50;
@@ -247,7 +247,7 @@
             margin-top: 10px;  
         }  
 
-        .run-config-btn:hover {
+        .run-btn:hover {
             background-color: #45a049;
         }
 
@@ -946,7 +946,7 @@
             async function runTest(configId){
                 try {
                     const formData = new FormData();
-                    formData.append('configId', configID);
+                    formData.append('configId', configId);
 
                     const response = await fetch('/home/tests/runTest', {
                         method: 'POST', 

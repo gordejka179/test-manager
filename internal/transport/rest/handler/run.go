@@ -8,7 +8,7 @@ import (
 )
 
 type RunService interface {
-	Run(ctx context.Context, configName string) (*core.Log, error)
+	RunTest(ctx context.Context, configId string) (*core.Log, error)
 }
 
 type RunServiceHandler struct {
@@ -19,8 +19,7 @@ func NewRunServiceHandler(S RunService) *RunServiceHandler {
 	return &RunServiceHandler{service: S}
 }
 
-func (h *RunServiceHandler) RunTest(c *gin.Context) error {
+func (h *RunServiceHandler) RunTest(c *gin.Context) {
 	configId := c.PostForm("configId")
-
-	pkg.connectSSH()
+	h.service.RunTest(c, configId)
 }

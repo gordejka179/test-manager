@@ -6,12 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
-	"os"
-	"strconv"
-	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 	"github.com/gordejka179/test-manager/internal/core"
 	"github.com/gordejka179/test-manager/pkg"
@@ -109,7 +104,7 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 	}
 
 	//fmt.Println(c.Request.PostForm)
-	data := convertToMap(c.Request.PostForm)
+	data := pkg.ConvertToMap(c.Request.PostForm)
 
 	testName, ok := data["test_name"].(string)
 	if !ok {
@@ -155,70 +150,6 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, config)
 
 	//saveToTOML("tmp.toml", data)
-}
-
-func convertToMap(v url.Values) map[string]interface{} {
-	// Преобразуем FormData в map[string]interface{}
-	data := make(map[string]interface{})
-	for key, values := range v {
-		if len(values) == 0 {
-			continue
-		}
-		value := values[0]
-		setNestedValue(&data, key, value)
-	}
-	return data
-}
-func setNestedValue(m *map[string]interface{}, key string, value interface{}) {
-	keys := strings.Split(key, ".")
-	for i, k := range keys {
-		if i == len(keys)-1 {
-			(*m)[k] = parseValue(value.(string))
-		} else {
-			// Если вложенного map нет — создаём
-			if _, exists := (*m)[k]; !exists {
-				(*m)[k] = make(map[string]interface{})
-			}
-			nested := (*m)[k].(map[string]interface{})
-			setNestedValue(&nested, strings.Join(keys[i+1:], "."), value)
-			return
-		}
-	}
-}
-
-func parseValue(s string) interface{} {
-	var jsonValue interface{}
-	if err := json.Unmarshal([]byte(s), &jsonValue); err == nil {
-		return jsonValue
-	}
-
-	if s == "[]" {
-		return []interface{}{} // Пустой массив
-	}
-	if s == "true" {
-		return true
-	}
-	if s == "false" {
-		return false
-	}
-	if i, err := strconv.Atoi(s); err == nil {
-		return i
-	}
-	if f, err := strconv.ParseFloat(s, 64); err == nil {
-		return f
-	}
-	return s
-}
-
-func saveToTOML(filename string, data interface{}) error {
-	file, err := os.Create(filename) // Создает файл с указанным именем
-	if err != nil {
-		return err // Если произошла ошибка при создании файла, возвращается ошибка
-	}
-	defer file.Close() // Убедитесь, что файл закроется после завершения функции
-
-	encoder := toml.NewEncoder(file) // Создает новый TOML-энкодер для записи в файл
-	return encoder.Encode(data)      // Кодирует данные в TOML и записывает их в файл
 }
 
 func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {

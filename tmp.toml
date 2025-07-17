@@ -1,17 +1,21 @@
-[database]
-  dbConfig = ""
-  dbName = ""
+ley = 0.0
+
+[db]
+  databaseconfigpath = ""
+  databasename = ""
   hosts = []
   password = ""
   user = ""
 
 [log]
-  invalidFieldsLog = ""
-  missingDocsImportedLog = ""
+  invalidfieldslog = ""
+  missingdocsimportedlog = ""
 
 [run]
-  consumerGoroutines = 0.0
-  readerGoroutines = 0.0
+  consumergoroutines = 0.0
+  readergoroutines = 0.0
   [run.mode]
-    dad = 0.0
     mom = 0.0
+    [run.mode.dad]
+      minus = ""
+      plus = ""

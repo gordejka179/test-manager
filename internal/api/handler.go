@@ -37,10 +37,9 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	router.POST("/home/tests/configsToTest", repServiceHandler.GetAllConfigsToTest)
 	router.POST("/home/tests/configHistory", repServiceHandler.GetLogsToConfig)
 
-	runner := storage.NewRunner()
-	runService := service.NewRunService(runner)
+	runService := service.NewRunService(testRepository)
 	runServiceHandler := handler.NewRunServiceHandler(runService)
-	router.POST("/home/tests/runTest", ServiceHandler.GetLogsToConfig)
+	router.POST("/home/tests/runTest", runServiceHandler.RunTest)
 
 	return router
 }
