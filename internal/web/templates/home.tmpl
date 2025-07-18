@@ -631,14 +631,12 @@
 
                 // Получаем созданный конфиг с сервера
                 const newConfig = await response.json();
-                console.log(newConfig)
 
 
                 const configLi = document.createElement('li');
                 configLi.className = 'config-item';
                 configLi.dataset.id = newConfig.id;
                 configLi.textContent = newConfig.name;
-                console.log(newConfig.name)
                 configLi.addEventListener('click', (e) => {
                     e.stopPropagation();
                     showConfigDescription(newConfig);
@@ -876,6 +874,7 @@
 
             //Получаем список логов к конфигу
             async function getHistoryToConfig(configId) {
+                console.log(configId)
                 try {
                     const formData = new FormData();
                     formData.append('config_id', configId);
@@ -926,7 +925,6 @@
             document.querySelector('.closeLogModal').addEventListener('click', closeLogModal);
 
             function showLogDescription(log) {
-                console.log(log);
     
                 // Извлекаем нужные поля из объекта log
                 const createdAt = log.created_at
@@ -957,9 +955,6 @@
                     if (!response.ok) {
                         throw new Error('Ошибка при загрузке конфигов к тесту');
                     }
-
-                    //получаем текст лога
-                    let textLog = await response.json();
                 } catch (error) {
                     console.error('Ошибка:', error);
                     testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;

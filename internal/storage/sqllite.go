@@ -51,7 +51,7 @@ func createTables(db *sql.DB) error {
 
 		CREATE TABLE IF NOT EXISTS test_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			config_id TEXT NOT NULL,
+			config_id INTEGER,
 			output TEXT,       
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (config_id) REFERENCES test_configs(id) ON DELETE CASCADE
@@ -140,7 +140,7 @@ func (s *SQLiteStorage) AddConfig(ctx context.Context, config *core.Config) (int
 	return id, err
 }
 
-func (s *SQLiteStorage) GetConfigByID(ctx context.Context, configID string) (*core.Config, error) {
+func (s *SQLiteStorage) GetConfigByID(ctx context.Context, configID int) (*core.Config, error) {
 	var config core.Config
 	err := s.DB.QueryRowContext(ctx,
 		`SELECT id, test_name, name, config_type, content
@@ -209,7 +209,13 @@ func (s *SQLiteStorage) DeleteConfig(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error) {
+func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
+	var exists bool
+	err := s.DB.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM test_configs WHERE id = ?)`,
+		configID).Scan(&exists)
+
+	fmt.Println(exists)
 	rows, err := s.DB.QueryContext(ctx,
 		`SELECT id, config_id, output
 		FROM test_logs WHERE config_id = ?`,
@@ -230,6 +236,7 @@ func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID string) ([
 		}
 		logs = append(logs, log)
 	}
+	fmt.Println(configID, logs)
 
 	return logs, nil
 }
@@ -256,7 +263,7 @@ func (s *SQLiteStorage) AddLog(ctx context.Context, log *core.Log) error {
 	_, err = s.DB.ExecContext(ctx,
 		`INSERT INTO test_logs (config_id, number, output)
 			VALUES (?, ?, ?)`,
-		log.ID, num, log.Output)
+		log.ConfigID, num, log.Output)
 
 	if err != nil {
 		return err

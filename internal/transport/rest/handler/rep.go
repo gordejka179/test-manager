@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gordejka179/test-manager/internal/core"
@@ -18,11 +19,11 @@ type TestService interface {
 	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, name string) error
 	AddConfig(ctx context.Context, config *core.Config) (int64, error)
-	GetConfigByID(ctx context.Context, configID string) (*core.Config, error)
+	GetConfigByID(ctx context.Context, configID int) (*core.Config, error)
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
 	DeleteConfig(ctx context.Context, id string) error
-	GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error)
+	GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error)
 	AddLog(ctx context.Context, log *core.Log) error
 }
 
@@ -145,7 +146,11 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 
 	config := core.Config{TestName: testName, ConfigType: configType, Name: configName, Content: jsonData}
 
-	h.service.AddConfig(c, &config)
+	id, err := h.service.AddConfig(c, &config)
+	if err != nil {
+		log.Fatal("Ошибка метода AddConfig:", err)
+	}
+	config.ID = int(id)
 
 	c.JSON(http.StatusOK, config)
 
@@ -163,7 +168,11 @@ func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
 }
 
 func (h *TestServiceHandler) GetLogsToConfig(c *gin.Context) {
-	configId := c.PostForm("config_id")
+	configIdStr := c.PostForm("config_id")
+	configId, err := strconv.Atoi(configIdStr)
+	if err != nil {
+		log.Fatalf("Ошибка метода GetLogsToConfig: ", err)
+	}
 	logs, err := h.service.GetLogsToConfig(c.Request.Context(), configId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

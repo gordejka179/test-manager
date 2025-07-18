@@ -22,7 +22,7 @@ type Config struct {
 
 type Log struct {
 	ID        int       `json:"id"`
-	ConfigID  string    `json:"config_id"`
+	ConfigID  int       `json:"config_id"`
 	Number    int       `json:"number"`
 	CreatedAt time.Time `json:"created_at"`
 	Output    string    `json:"output"`

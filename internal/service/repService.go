@@ -12,11 +12,11 @@ type TestRepository interface {
 	GetAllTests(ctx context.Context) ([]core.Test, error)
 	DeleteTest(ctx context.Context, name string) error
 	AddConfig(ctx context.Context, config *core.Config) (int64, error)
-	GetConfigByID(ctx context.Context, configID string) (*core.Config, error)
+	GetConfigByID(ctx context.Context, configID int) (*core.Config, error)
 	GetAllConfigs(ctx context.Context) ([]core.Config, error)
 	GetAllConfigsToTest(ctx context.Context, testName string) ([]core.Config, error)
 	DeleteConfig(ctx context.Context, id string) error
-	GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error)
+	GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error)
 	AddLog(ctx context.Context, log *core.Log) error
 }
 
@@ -48,7 +48,7 @@ func (s *TestService) AddConfig(ctx context.Context, config *core.Config) (int64
 	return s.repo.AddConfig(ctx, config)
 }
 
-func (s *TestService) GetConfigByID(ctx context.Context, configID string) (*core.Config, error) {
+func (s *TestService) GetConfigByID(ctx context.Context, configID int) (*core.Config, error) {
 	return s.repo.GetConfigByID(ctx, configID)
 }
 
@@ -64,7 +64,7 @@ func (s *TestService) DeleteConfig(ctx context.Context, testID string) error {
 	return s.repo.DeleteConfig(ctx, testID)
 }
 
-func (s *TestService) GetLogsToConfig(ctx context.Context, configID string) ([]core.Log, error) {
+func (s *TestService) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
 	return s.repo.GetLogsToConfig(ctx, configID)
 }
 

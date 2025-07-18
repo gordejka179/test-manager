@@ -2,13 +2,14 @@ package handler
 
 import (
 	"context"
+	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gordejka179/test-manager/internal/core"
 )
 
 type RunService interface {
-	RunTest(ctx context.Context, configId string) (*core.Log, error)
+	RunTest(ctx context.Context, configId int) error
 }
 
 type RunServiceHandler struct {
@@ -20,6 +21,10 @@ func NewRunServiceHandler(S RunService) *RunServiceHandler {
 }
 
 func (h *RunServiceHandler) RunTest(c *gin.Context) {
-	configId := c.PostForm("configId")
+	configIdStr := c.PostForm("configId")
+	configId, err := strconv.Atoi(configIdStr)
+	if err != nil {
+		log.Fatal("Ошибка преобразования типа в RunTest:", err)
+	}
 	h.service.RunTest(c, configId)
 }

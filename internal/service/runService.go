@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 
@@ -19,7 +18,7 @@ func NewRunService(repo TestRepository) *RunService {
 	return &RunService{repo: repo}
 }
 
-func (s *RunService) RunTest(ctx context.Context, configId string) (*core.Log, error) {
+func (s *RunService) RunTest(ctx context.Context, configId string) error {
 	config, err := s.repo.GetConfigByID(ctx, configId)
 	if err != nil {
 		log.Fatal("Ошибка метода RunTest:", err)
@@ -34,7 +33,7 @@ func (s *RunService) RunTest(ctx context.Context, configId string) (*core.Log, e
 
 	var data map[string]interface{}
 	if err := json.Unmarshal(config.Content, &data); err != nil {
-		return nil, err
+		return err
 	}
 
 	pkg.SaveToTOML("tmp.toml", data)
@@ -50,9 +49,9 @@ func (s *RunService) RunTest(ctx context.Context, configId string) (*core.Log, e
 		log.Fatal("Ошибка метода RunTest", err)
 	}
 
-	fmt.Println("Run")
-	//pkg.СonnectSSH()
-	fmt.Println(434334344434)
-	log := core.Log{}
-	return &log, nil
+	output := pkg.СonnectSSH()
+
+	log := core.Log{Output: output, ConfigID: configId}
+	s.repo.AddLog(ctx, &log)
+	return nil
 }

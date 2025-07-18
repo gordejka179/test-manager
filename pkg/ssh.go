@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func СonnectSSH() {
+func СonnectSSH() string {
 	sshConfig := &ssh.ClientConfig{
 		User: "t-bmstu",
 		Auth: []ssh.AuthMethod{
@@ -27,10 +27,8 @@ func СonnectSSH() {
 		fmt.Println("adadaddadad")
 		log.Fatalf("Не удалось подключиться: %v", err)
 	}
-	fmt.Println(123)
 	defer client.Close()
 
-	fmt.Println("lalaala")
 	// Копируем бинарник на сервер
 	session, err := client.NewSession()
 	if err != nil {
@@ -45,14 +43,22 @@ func СonnectSSH() {
 		log.Fatalf("Ошибка копирования бинарника: %v", err)
 	}
 
+	localConfig := "tmp.toml"
+	remoteConfig := "/home/t-bmstu/tmpConfigTest-Manager"
+
+	if err := copyFile(client, localConfig, remoteConfig); err != nil {
+		log.Fatalf("Ошибка копирования конфига: %v", err)
+	}
+
 	// Выполняем команду на сервере
-	cmd := fmt.Sprintf("chmod +x %s && cat %s ", remoteBinary, remoteBinary)
+	cmd := fmt.Sprintf("chmod +x %s && %s && cat %s ", remoteBinary, remoteBinary, remoteConfig)
 	output, err := runCommand(client, cmd)
 	if err != nil {
-		log.Fatalf("Программа выполнилась с ошибкой: %v", err)
+		log.Fatalf("Команда выполнилась с ошибкой: %v", err)
 	}
 
 	fmt.Printf("Вывод программы:\n%s\n", output)
+	return output
 }
 
 // возвращает AuthMethod для аутентификации по ключу
