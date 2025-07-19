@@ -874,7 +874,6 @@
 
             //Получаем список логов к конфигу
             async function getHistoryToConfig(configId) {
-                console.log(configId)
                 try {
                     const formData = new FormData();
                     formData.append('config_id', configId);
@@ -895,10 +894,24 @@
                         logs.forEach(log => {
                             const li = document.createElement('li');
                             li.className = 'log-item'
-                            li.textContent = log.number;
-                            li.dataset.id = log.config_id;
+                            li.textContent = log.created_at;
+                            li.dataset.id = log.id;
                             li.addEventListener('click', () => showLogDescription(log));
-                            testList.appendChild(li);  
+
+                            let hasLogAlreadyBeenAdded = false
+                            const existingLogItems = logList.querySelectorAll('.log-item');
+                            if (existingLogItems != null){
+                                existingLogItems.forEach(li => {
+                                console.log(li, 57, log.id)
+                                if (li.dataset.id === log.id){
+                                    hasLogAlreadyBeenAdded = true
+                                }
+                                });
+                            }
+
+                            if (hasLogAlreadyBeenAdded === false){
+                                logList.appendChild(li)
+                            }
                         });
                     }
                                     
@@ -940,7 +953,7 @@
                 document.getElementById('logDetails').innerHTML = logDetailsHTML;
             }
 
-
+            //Запуск теста
             async function runTest(configId){
                 try {
                     const formData = new FormData();

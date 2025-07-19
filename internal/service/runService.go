@@ -18,7 +18,7 @@ func NewRunService(repo TestRepository) *RunService {
 	return &RunService{repo: repo}
 }
 
-func (s *RunService) RunTest(ctx context.Context, configId string) error {
+func (s *RunService) RunTest(ctx context.Context, configId int) error {
 	config, err := s.repo.GetConfigByID(ctx, configId)
 	if err != nil {
 		log.Fatal("Ошибка метода RunTest:", err)

@@ -57,7 +57,7 @@ func СonnectSSH() string {
 		log.Fatalf("Команда выполнилась с ошибкой: %v", err)
 	}
 
-	fmt.Printf("Вывод программы:\n%s\n", output)
+	//fmt.Printf("Вывод программы:\n%s\n", output)
 	return output
 }
 

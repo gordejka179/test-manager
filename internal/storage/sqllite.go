@@ -52,6 +52,7 @@ func createTables(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS test_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			config_id INTEGER,
+			number INTEGER,
 			output TEXT,       
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (config_id) REFERENCES test_configs(id) ON DELETE CASCADE
@@ -210,14 +211,8 @@ func (s *SQLiteStorage) DeleteConfig(ctx context.Context, id string) error {
 }
 
 func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
-	var exists bool
-	err := s.DB.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM test_configs WHERE id = ?)`,
-		configID).Scan(&exists)
-
-	fmt.Println(exists)
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, config_id, output
+		`SELECT id, config_id, created_at, output
 		FROM test_logs WHERE config_id = ?`,
 		configID)
 
@@ -230,37 +225,30 @@ func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]co
 	for rows.Next() {
 		var log core.Log
 		if err := rows.Scan(
-			&log.ID, &log.ConfigID, &log.Output,
+			&log.ID, &log.ConfigID, &log.CreatedAt, &log.Output,
 		); err != nil {
 			return nil, err
 		}
 		logs = append(logs, log)
 	}
-	fmt.Println(configID, logs)
 
 	return logs, nil
 }
 
 func (s *SQLiteStorage) AddLog(ctx context.Context, log *core.Log) error {
-	row, err := s.DB.QueryContext(ctx, `
-    SELECT *
-    FROM test_logs
-    WHERE config_id = ? AND number = (SELECT MAX(number) FROM test_logs WHERE config_id = ?)`,
-		log.ConfigID, log.ConfigID)
-	if err != nil {
-		return err
-	}
-
+	//считаем, сколько раз логов относится к конфигу
 	num := 0
 
-	if row != nil {
-		if err := row.Scan(&num); err != nil {
-			return err
-		}
+	row := s.DB.QueryRowContext(ctx, `
+	SELECT MAX(number) FROM test_logs WHERE config_id = ?`, log.ConfigID)
+	if row == nil {
+		num = 0
+	} else {
+		row.Scan(&num)
 	}
-	num += 1
 
-	_, err = s.DB.ExecContext(ctx,
+	num += 1
+	_, err := s.DB.ExecContext(ctx,
 		`INSERT INTO test_logs (config_id, number, output)
 			VALUES (?, ?, ?)`,
 		log.ConfigID, num, log.Output)
