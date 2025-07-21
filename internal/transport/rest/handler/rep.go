@@ -13,7 +13,7 @@ import (
 	"github.com/gordejka179/test-manager/pkg"
 )
 
-type TestService interface {
+type RepService interface {
 	AddTest(ctx context.Context, test *core.Test) error
 	GetTestByName(ctx context.Context, name string) (*core.Test, error)
 	GetAllTests(ctx context.Context) ([]core.Test, error)
@@ -27,26 +27,25 @@ type TestService interface {
 	AddLog(ctx context.Context, log *core.Log) error
 }
 
-type TestServiceHandler struct {
-	service TestService
+type RepServiceHandler struct {
+	service RepService
 }
 
-func NewTestServiceHandler(S TestService) *TestServiceHandler {
-	return &TestServiceHandler{service: S}
+func NewRepServiceHandler(S RepService) *RepServiceHandler {
+	return &RepServiceHandler{service: S}
 }
 
-func (h *TestServiceHandler) GetAllTests(c *gin.Context) {
+func (h *RepServiceHandler) GetAllTests(c *gin.Context) {
 	tests, err := h.service.GetAllTests(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		log.Fatal(err)
 		return
 	}
-
 	c.JSON(http.StatusOK, tests)
 }
 
-func (h *TestServiceHandler) AddTest(c *gin.Context) {
+func (h *RepServiceHandler) AddTest(c *gin.Context) {
 	name := c.PostForm("name")
 	configType := c.PostForm("config_type")
 	structureName := c.PostForm("structure_name")
@@ -98,7 +97,7 @@ func (h *TestServiceHandler) AddTest(c *gin.Context) {
 
 }
 
-func (h *TestServiceHandler) AddConfig(c *gin.Context) {
+func (h *RepServiceHandler) AddConfig(c *gin.Context) {
 	if err := c.Request.ParseForm(); err != nil {
 		c.String(http.StatusBadRequest, "Bad request")
 		return
@@ -157,7 +156,7 @@ func (h *TestServiceHandler) AddConfig(c *gin.Context) {
 	//saveToTOML("tmp.toml", data)
 }
 
-func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
+func (h *RepServiceHandler) GetAllConfigsToTest(c *gin.Context) {
 	TestName := c.PostForm("testName")
 	configs, err := h.service.GetAllConfigsToTest(c, TestName)
 	if err != nil {
@@ -167,11 +166,11 @@ func (h *TestServiceHandler) GetAllConfigsToTest(c *gin.Context) {
 	c.JSON(http.StatusOK, configs)
 }
 
-func (h *TestServiceHandler) GetLogsToConfig(c *gin.Context) {
+func (h *RepServiceHandler) GetLogsToConfig(c *gin.Context) {
 	configIdStr := c.PostForm("config_id")
 	configId, err := strconv.Atoi(configIdStr)
 	if err != nil {
-		log.Fatalf("Ошибка метода GetLogsToConfig: ", err)
+		log.Fatal("Ошибка метода GetLogsToConfig: ", err)
 	}
 	logs, err := h.service.GetLogsToConfig(c.Request.Context(), configId)
 	if err != nil {
@@ -180,4 +179,20 @@ func (h *TestServiceHandler) GetLogsToConfig(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, logs)
+}
+
+func (h *RepServiceHandler) DeleteConfig(c *gin.Context) {
+	configId := c.PostForm("config_id")
+	err := h.service.DeleteConfig(c, configId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+}
+
+func (h *RepServiceHandler) DeleteTest(c *gin.Context) {
+	testName := c.PostForm("test_name")
+	err := h.service.DeleteTest(c, testName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
 }

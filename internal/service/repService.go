@@ -20,54 +20,54 @@ type TestRepository interface {
 	AddLog(ctx context.Context, log *core.Log) error
 }
 
-type TestService struct {
+type RepService struct {
 	repo TestRepository
 }
 
-func NewTestService(repo TestRepository) *TestService {
-	return &TestService{repo: repo}
+func NewRepService(repo TestRepository) *RepService {
+	return &RepService{repo: repo}
 }
 
-func (s *TestService) AddTest(ctx context.Context, test *core.Test) error {
+func (s *RepService) AddTest(ctx context.Context, test *core.Test) error {
 	return s.repo.AddTest(ctx, test)
 }
 
-func (s *TestService) GetTestByName(ctx context.Context, name string) (*core.Test, error) {
+func (s *RepService) GetTestByName(ctx context.Context, name string) (*core.Test, error) {
 	return s.repo.GetTestByName(ctx, name)
 }
 
-func (s *TestService) GetAllTests(ctx context.Context) ([]core.Test, error) {
+func (s *RepService) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	return s.repo.GetAllTests(ctx)
 }
 
-func (s *TestService) DeleteTest(ctx context.Context, name string) error {
+func (s *RepService) DeleteTest(ctx context.Context, name string) error {
 	return s.repo.DeleteTest(ctx, name)
 }
 
-func (s *TestService) AddConfig(ctx context.Context, config *core.Config) (int64, error) {
+func (s *RepService) AddConfig(ctx context.Context, config *core.Config) (int64, error) {
 	return s.repo.AddConfig(ctx, config)
 }
 
-func (s *TestService) GetConfigByID(ctx context.Context, configID int) (*core.Config, error) {
+func (s *RepService) GetConfigByID(ctx context.Context, configID int) (*core.Config, error) {
 	return s.repo.GetConfigByID(ctx, configID)
 }
 
-func (s *TestService) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
+func (s *RepService) GetAllConfigs(ctx context.Context) ([]core.Config, error) {
 	return s.repo.GetAllConfigs(ctx)
 }
 
-func (s *TestService) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
+func (s *RepService) GetAllConfigsToTest(ctx context.Context, testID string) ([]core.Config, error) {
 	return s.repo.GetAllConfigsToTest(ctx, testID)
 }
 
-func (s *TestService) DeleteConfig(ctx context.Context, testID string) error {
+func (s *RepService) DeleteConfig(ctx context.Context, testID string) error {
 	return s.repo.DeleteConfig(ctx, testID)
 }
 
-func (s *TestService) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
+func (s *RepService) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
 	return s.repo.GetLogsToConfig(ctx, configID)
 }
 
-func (s *TestService) AddLog(ctx context.Context, log *core.Log) error {
+func (s *RepService) AddLog(ctx context.Context, log *core.Log) error {
 	return s.repo.AddLog(ctx, log)
 }

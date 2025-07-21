@@ -28,14 +28,16 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		log.Fatalf("Failed to create SQLite storage: %v", err)
 	}
 
-	repService := service.NewTestService(testRepository)
-	repServiceHandler := handler.NewTestServiceHandler(repService)
+	repService := service.NewRepService(testRepository)
+	repServiceHandler := handler.NewRepServiceHandler(repService)
 
 	router.GET("/home/tests", repServiceHandler.GetAllTests)
 	router.POST("/home/tests/newTest", repServiceHandler.AddTest)
 	router.POST("/home/tests/newConfig", repServiceHandler.AddConfig)
 	router.POST("/home/tests/configsToTest", repServiceHandler.GetAllConfigsToTest)
 	router.POST("/home/tests/configHistory", repServiceHandler.GetLogsToConfig)
+	router.POST("/home/tests/deleteConfig", repServiceHandler.DeleteConfig)
+	router.POST("/home/tests/deleteTest", repServiceHandler.DeleteTest)
 
 	runService := service.NewRunService(testRepository)
 	runServiceHandler := handler.NewRunServiceHandler(runService)

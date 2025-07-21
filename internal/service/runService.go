@@ -18,7 +18,7 @@ func NewRunService(repo TestRepository) *RunService {
 	return &RunService{repo: repo}
 }
 
-func (s *RunService) RunTest(ctx context.Context, configId int) error {
+func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string, username string, commandTemplate string) error {
 	config, err := s.repo.GetConfigByID(ctx, configId)
 	if err != nil {
 		log.Fatal("Ошибка метода RunTest:", err)
@@ -49,7 +49,7 @@ func (s *RunService) RunTest(ctx context.Context, configId int) error {
 		log.Fatal("Ошибка метода RunTest", err)
 	}
 
-	output := pkg.СonnectSSH()
+	output := pkg.СonnectSSH(serverIp, username, commandTemplate)
 
 	log := core.Log{Output: output, ConfigID: configId}
 	s.repo.AddLog(ctx, &log)

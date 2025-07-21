@@ -243,7 +243,6 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: auto; 
             margin-top: 10px;  
         }  
 
@@ -252,15 +251,13 @@
         }
 
 
-
         .test-description {
             position: relative;
         }
     
         .history-btn {
             position: absolute;
-            right: 20px;
-            up: 20px;
+            right: 0px;
             padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
@@ -292,7 +289,44 @@
             overflow-y: auto; 
         }
 
+        .delete-test-btn {
+            display: inline-block;
+            padding: 8px 16px;  
+            background-color: #f50723ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;  
+        }  
 
+        .delete-test-btn:hover {
+            background-color: #b31313ff;
+        }
+
+        .delete-config-btn {
+            display: inline-block;
+            padding: 8px 16px;  
+            background-color: #f50723ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: auto;
+            margin-top: 10px;  
+        }  
+
+        .delete-config-btn:hover {
+            background-color: #b31313ff;
+        }
+
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+        }
 
 
 
@@ -382,6 +416,52 @@
         </div>
     </div>
 
+    <!-- Модальное окно для ввода данных удалённого сервера -->
+    <div id="serverModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <span class="closeServerModal">&times;</span>
+            <h2>Введите учетные данные</h2>
+            <form id="serverForm">
+                <div class="form-group">
+                    <label for="serverIp">IP-адрес или DNS-запись сервера, на котором хотим запустить бинарник</label>
+                    <input type="text" id="serverIp" required>
+                </div>
+                <div class="form-group">
+                    <label for="username">Имя пользователя на сервере:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Команда, которой запускать бинарник:</label>
+                    <input type="text" id="commandTemplate" value='{BIN_FILE} -c {CONFIG}' required>
+                </div>
+                <button type="submit" class="submit-btn">Подтвердить</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Модальное окно для подтверждения удаления конфига -->
+    <div id="deleteConfigModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <span class="closeDeleteConfigModal">&times;</span>
+            <h2>Подтверждение удаления конфига</h2>
+            <form id="deleteConfigForm">
+                <button type="submit" class="submit-btn">Подтвердить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для подтверждения удаления теста -->
+    <div id="deleteTestModal" class="modal">
+        <div class="modal-content" style="width: 400px;">
+            <span class="closeDeleteTestModal">&times;</span>
+            <h2>Подтверждение удаления теста</h2>
+            <form id="deleteTestForm">
+                <button type="submit" class="submit-btn">Подтвердить</button>
+            </form>
+        </div>
+    </div>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -407,12 +487,27 @@
 
             const logList = document.getElementById('logList');
             const logModal = document.getElementById('logModal');
+
+            const serverModal = document.getElementById('serverModal');
+            const closeServerModalBtn = document.querySelector('.closeServerModal');
+            const serverForm = document.getElementById('serverForm');
+
+            const deleteConfigModal = document.getElementById('deleteConfigModal');
+            const closeDeleteConfigModalBtn = document.querySelector('.closeDeleteConfigModal');
+            const deleteConfigForm = document.getElementById('deleteConfigForm');
+
+            const deleteTestModal = document.getElementById('deleteTestModal');
+            const closeDeleteTestModalBtn = document.querySelector('.closeDeleteTestModal');
+            const deleteTestForm = document.getElementById('deleteTestForm');
    
             // Переменная для хранения текущего выбранного теста
             let currentSelectedTest = null;
 
             // Загрузить тесты с сервера при загрузке страницы
             let tests = [];
+
+            // Глобальная переменная для хранения текущего выбранного конфига
+            let configToRun = 0;
             
             async function fetchTests() {
                 try {
@@ -506,7 +601,7 @@
                 );
 
                 generateForm(config, '', htmlParts);
-                htmlParts.push('<button type="button" class="save-btn" onclick="saveConfig()">Save Config</button>');
+                htmlParts.push('<div id=btn-container class="btn-container"></div>')
                 htmlParts.push('</div>');
                 htmlParts.push('</form>');
                 return htmlParts.join('\n');
@@ -578,12 +673,14 @@
                 // Создать ссылку для скачивания файла
                 let fileContent = '';
                 if (test.binary) {
-                    // Преобразуем бинарные данные в Blob и создаем URL для скачивания
+                    // из Base64 декородируем в бинарные данные
                     const binaryString = atob(test.binary);
                     const bytes = new Uint8Array(binaryString.length);
                     for (let i = 0; i < binaryString.length; i++) {
                         bytes[i] = binaryString.charCodeAt(i);
                     }
+
+                    //Преобразуем бинарные данные в Blob и создаем URL для скачивания
                     const blob = new Blob([bytes], { type: 'application/octet-stream' });
                     const fileUrl = URL.createObjectURL(blob);
                     
@@ -603,6 +700,31 @@
                         ${fileContent}  
                         ${formHTML}                    
                 `;
+
+                //Кнопка для сохранения конфига
+                const saveConfigBtn = document.createElement('button');
+                saveConfigBtn.className = 'save-config-btn';
+                saveConfigBtn.textContent = 'Сохранить';
+
+                saveConfigBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    saveConfig();
+                });
+
+                //Кнопка для удаления теста
+                const deleteTestBtn = document.createElement('button');
+                deleteTestBtn.className = 'delete-test-btn';
+                deleteTestBtn.textContent = 'Удалить';
+
+                deleteTestBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openDeleteTestModal(test.name);
+                });
+
+                document.getElementById('btn-container').appendChild(saveConfigBtn);
+                document.getElementById('btn-container').appendChild(deleteTestBtn);
                 
             }
 
@@ -645,6 +767,7 @@
                 const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
                 config_ul.appendChild(configLi);
 
+
 			} catch (error) {
 				console.error('Ошибка:', error);
                 testDescription.innerHTML = `<p style="color: red;">Ошибка при создании конфига: ${error.message}</p>`;
@@ -664,7 +787,7 @@
                 resetTestForm();
             });
             
-            // Закрыть модальное окно с тестом при клике снаружи
+            // Закрыть модальное окно с тестом при клике снаружи формы
             window.addEventListener('click', function(event) {
                 if (event.target === newTestModal) {
                     newTestModal.style.display = 'none';
@@ -810,7 +933,14 @@
                 const runBtn = document.createElement('button');
                 runBtn.className = 'run-btn';
                 runBtn.textContent = 'Run';
-                runBtn.addEventListener('click', () => runTest(config.id));
+                runBtn.addEventListener('click', () => openRunModal(config.id));
+
+                //Кнопка для удаления конфига
+                const deleteConfigBtn = document.createElement('button');
+                deleteConfigBtn.className = 'delete-config-btn';
+                deleteConfigBtn.textContent = 'Удалить';
+                deleteConfigBtn.addEventListener('click', () => openDeleteConfigModal(config.id));
+
     
                 // Обновляем содержимое
                 testDescription.innerHTML = `
@@ -821,13 +951,16 @@
                     <br>
                     <br>
                     ${configDescription}
-                    <div id="run-btn-container"></div>
+                    <div id=btn-container class="btn-container"></div>
                 `;
-
+                
                 document.getElementById('history-btn-container').appendChild(historyBtn);
-                document.getElementById('run-btn-container').appendChild(runBtn);
+                document.getElementById('btn-container').appendChild(runBtn);
+                document.getElementById('btn-container').appendChild(deleteConfigBtn);
+
             }
 
+            //Получение конфигов ко всем тестам
             async function getConfigsToAllTests() {
                 for (let j = 0; j < tests.length; j++) {
                     let test = tests[j]
@@ -874,6 +1007,10 @@
 
             //Получаем список логов к конфигу
             async function getHistoryToConfig(configId) {
+                while (logList.firstChild) {
+                    logList.removeChild(logList.firstChild);
+                }
+
                 try {
                     const formData = new FormData();
                     formData.append('config_id', configId);
@@ -902,7 +1039,6 @@
                             const existingLogItems = logList.querySelectorAll('.log-item');
                             if (existingLogItems != null){
                                 existingLogItems.forEach(li => {
-                                console.log(li, 57, log.id)
                                 if (li.dataset.id === log.id){
                                     hasLogAlreadyBeenAdded = true
                                 }
@@ -929,10 +1065,17 @@
                 newTestModal.style.display = 'block';
             });
             
-            //Закрыть форму с логом
+            //Закрыть окно с историей
             function closeLogModal() {
                 document.getElementById('logModal').style.display = 'none';
             }
+
+            // Закрытие окна с историей из logModal
+            window.addEventListener('click', function(event) {
+                if (event.target === logModal) {
+                    document.getElementById('logModal').style.display = 'none';
+                }
+            });
 
             // Назначение обработчика события на крестик закрытия
             document.querySelector('.closeLogModal').addEventListener('click', closeLogModal);
@@ -953,11 +1096,26 @@
                 document.getElementById('logDetails').innerHTML = logDetailsHTML;
             }
 
+            //Открываем форму с информацией об удаленном сервере
+            async function openRunModal(configId){
+                configToRun = configId;
+                serverModal.style.display = 'block';
+            }
+
             //Запуск теста
-            async function runTest(configId){
+            serverForm.addEventListener('submit', async function(e) {
+                serverModal.style.display = 'none';
+                e.preventDefault();
                 try {
                     const formData = new FormData();
-                    formData.append('configId', configId);
+                    const serverIp = document.getElementById('serverIp').value;
+                    const username = document.getElementById('username').value;
+                    const commandTemplate = document.getElementById('commandTemplate').value;
+
+                    formData.append('config_id', configToRun);
+                    formData.append('server_ip', serverIp);
+                    formData.append('commandTemplate', commandTemplate);
+                    formData.append('username', username);
 
                     const response = await fetch('/home/tests/runTest', {
                         method: 'POST', 
@@ -973,7 +1131,93 @@
                     testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
                 }
 
+
+            })
+
+            // Закрытие serverModal
+            closeServerModalBtn.addEventListener('click', function() {
+                serverModal.style.display = 'none';
+            });
+
+            // Закрытие при клике вне формы с из serverModal
+            window.addEventListener('click', function(event) {
+                if (event.target === serverModal) {
+                    serverModal.style.display = 'none';
+                }
+            });
+
+            // Открытие модального окна с подтверждением удаления конфига
+            async function openDeleteConfigModal(configId){
+                deleteConfigModal.style.display = 'block';
+                deleteConfigModal.dataset.configId = configId;
             }
+
+
+            //Удаление конфига
+            deleteConfigForm.addEventListener('submit', async function(e) {
+                deleteConfigModal.style.display = 'none';
+                e.preventDefault();
+                const configId = deleteConfigModal.dataset.configId;
+                try {
+                    const formData = new FormData();
+                    formData.append('config_id', configId);
+
+                    const response = await fetch('/home/tests/deleteConfig', {
+                        method: 'POST', 
+                        body: formData
+                    })
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка при удалении конфига');
+                    }
+
+                    const configLi = document.querySelector(`.test-list .config-list li[data-id="${configId}"]`);
+                    configLi.remove()
+                    testDescription.innerHTML = '';
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    testDescription.innerHTML = `<p style="color: red;">Ошибка при удалении конфига: ${error.message}</p>`;
+                }
+
+            })
+
+            // Открытие модального окна с подтверждением удаления теста
+            async function openDeleteTestModal(testName){
+                deleteTestModal.style.display = 'block';
+                deleteTestModal.dataset.testName = testName;
+            }
+
+
+            //Удаление теста
+            deleteTestForm.addEventListener('submit', async function(e) {
+                e.preventDefault()
+                console.log(179999)
+                deleteTestModal.style.display = 'none';
+                const testName = deleteTestModal.dataset.testName;
+                try {
+                    const formData = new FormData();
+                    formData.append('test_name', testName);
+
+                    const response = await fetch('/home/tests/deleteTest', {
+                        method: 'POST', 
+                        body: formData
+                    })
+
+                    if (!response.ok) {
+                        throw new Error('Ошибка при удалении теста');
+                    }
+
+                    const configLi = document.querySelector(`.test-list li[data-id="${testName}"]`);
+                    console.log(configLi)
+                    configLi.remove()
+                    testDescription.innerHTML = '';
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    testDescription.innerHTML = `<p style="color: red;">Ошибка при удалении теста: ${error.message}</p>`;
+                }
+
+            })
+
 
             // Инициализация страницы - загрузка тестов и конфигов к ним
             fetchTests();

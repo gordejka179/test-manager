@@ -7,24 +7,22 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
 
-func СonnectSSH() string {
+func СonnectSSH(serverIp string, username string, commandTemplate string) string {
 	sshConfig := &ssh.ClientConfig{
-		User: "t-bmstu",
+		User: username,
 		Auth: []ssh.AuthMethod{
 			PublicKeyFile("/home/ivan/.ssh/key2"), //путь к приватному ключу, ВАЖНО: полный путь
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	fmt.Println("maamamamamamamaam")
-
-	client, err := ssh.Dial("tcp", "195.19.40.45:22", sshConfig)
+	client, err := ssh.Dial("tcp", serverIp+":22", sshConfig)
 	if err != nil {
-		fmt.Println("adadaddadad")
 		log.Fatalf("Не удалось подключиться: %v", err)
 	}
 	defer client.Close()
@@ -36,23 +34,34 @@ func СonnectSSH() string {
 	}
 	defer session.Close()
 
+	//Узнаём адрес директории на сервере
+	var stdout bytes.Buffer
+	session.Stdout = &stdout
+	err = session.Run("echo $HOME")
+
+	if err != nil {
+		log.Fatalf("Не удалось узнать адрес директории: %v", err)
+	}
+
 	localBinary := "tmp"
-	remoteBinary := "/home/t-bmstu/tmpTest-Manager"
+	remoteBinary := strings.TrimSpace(stdout.String()) + "/tmpBinaryTM"
 
 	if err := copyFile(client, localBinary, remoteBinary); err != nil {
 		log.Fatalf("Ошибка копирования бинарника: %v", err)
 	}
 
 	localConfig := "tmp.toml"
-	remoteConfig := "/home/t-bmstu/tmpConfigTest-Manager"
+	remoteConfig := strings.TrimSpace(stdout.String()) + "/tmpConfigTM"
 
 	if err := copyFile(client, localConfig, remoteConfig); err != nil {
 		log.Fatalf("Ошибка копирования конфига: %v", err)
 	}
 
 	// Выполняем команду на сервере
-	cmd := fmt.Sprintf("chmod +x %s && %s && cat %s ", remoteBinary, remoteBinary, remoteConfig)
-	output, err := runCommand(client, cmd)
+	command := strings.ReplaceAll(commandTemplate, "{BIN_FILE}", remoteBinary)
+	command = strings.ReplaceAll(command, "{CONFIG}", remoteConfig)
+
+	output, err := runCommand(client, command)
 	if err != nil {
 		log.Fatalf("Команда выполнилась с ошибкой: %v", err)
 	}
