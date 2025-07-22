@@ -1,10 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
+	"time"
 
 	"github.com/gordejka179/test-manager/internal/core"
 	"github.com/gordejka179/test-manager/pkg"
@@ -42,14 +47,40 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
 
 	_, err = file.Write(test.Binary)
+	file.Close()
 	if err != nil {
 		log.Fatal("Ошибка метода RunTest", err)
 	}
+	time.Sleep(100 * time.Millisecond)
 
-	output, err := pkg.СonnectSSH(serverIp, username, commandTemplate)
+	cmd := exec.Command("chmod", "+x", "tmp")
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("не получилось выдать право бинарнику на исполнение: %w", err)
+	}
+
+	var output string
+	if serverIp != "localhost" {
+		output, err = pkg.СonnectSSH(serverIp, username, commandTemplate)
+	} else {
+		localBinary := "./tmp"
+		localConfig := "tmp.toml"
+		command := strings.ReplaceAll(commandTemplate, "{BIN_FILE}", localBinary)
+		command = strings.ReplaceAll(command, "{CONFIG}", localConfig)
+
+		cmd := exec.Command("bash", "-c", command)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		if err != nil {
+			output = stderr.String()
+		} else {
+			output = stdout.String()
+		}
+	}
 
 	log := core.Log{Output: output, ConfigID: configId}
 	s.repo.AddLog(ctx, &log)

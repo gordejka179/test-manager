@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Менеджер тестов</title>
     <!-- Materialize CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">-->
     <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -380,7 +380,7 @@
             <div class="form-group">
                 <label for="configType">Тип конфигурации:</label>
                 <select id="configType" name="configType" class="form-select" required>
-                    <option value="" disabled selected>Выберите тип...</option>
+                    <option value="" selected>Выберите тип...</option>
                     <option value="toml">toml</option>
                     <option value="viper">viper</option>
                 </select>
@@ -445,7 +445,7 @@
                 </div>
                 <div class="form-group">
                     <label for="username">Имя пользователя на сервере:</label>
-                    <input type="text" id="username" required>
+                    <input type="text" id="username">
                 </div>
                 <div class="form-group">
                     <label>Команда, которой запускать бинарник:</label>
@@ -703,7 +703,7 @@
                     
                     fileContent = `
                         <div class="file-info">
-                            <p><strong>Прикреплённый бинарник:</strong> ${test.name}</p>
+                            <p><strong>Прикреплённый бинарник:</strong> ${test.binary_name}</p>
                             <p><strong>Формат конфигов к тесту:</strong> ${test.config_type}</p>
                             <a href="${fileUrl}" download="${test.name}" class="download-btn">Скачать бинарник</a>
                         </div>
@@ -868,6 +868,7 @@
                     // Создаем FormData для отправки файла
                     const formData = new FormData();
                     formData.append('name', testName);
+                    formData.append('test_file_name', testFile.name);
                     formData.append('test_file', testFile);
                     formData.append('config_type', configType);
                     formData.append('config_file', configFile);
@@ -1024,6 +1025,7 @@
 
             //Получаем список логов к конфигу
             async function getHistoryToConfig(configId) {
+                document.getElementById('logDetails').innerHTML = '<p>Выберите лог для просмотра деталей.</p>';
                 while (logList.firstChild) {
                     logList.removeChild(logList.firstChild);
                 }
@@ -1043,6 +1045,7 @@
                     
                     // Получаем созданный список логов с сервера
                     const logs = await response.json();
+                    console.log(logs)
 
                     if (logs != null){
                         logs.forEach(log => {
@@ -1098,7 +1101,6 @@
             document.querySelector('.closeLogModal').addEventListener('click', closeLogModal);
 
             function showLogDescription(log) {
-    
                 // Извлекаем нужные поля из объекта log
                 const createdAt = log.created_at
                 const output = log.output
@@ -1189,6 +1191,7 @@
                     }
 
                     const configLi = document.querySelector(`.test-list .config-list li[data-id="${configId}"]`);
+                    console.log(configLi)
                     configLi.remove()
                     testDescription.innerHTML = '';
                 } catch (error) {

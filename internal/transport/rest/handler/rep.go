@@ -49,6 +49,7 @@ func (h *RepServiceHandler) AddTest(c *gin.Context) {
 	name := c.PostForm("name")
 	configType := c.PostForm("config_type")
 	structureName := c.PostForm("structure_name")
+	binaryName := c.PostForm("test_file_name")
 
 	testFileHeader, err := c.FormFile("test_file")
 	if err != nil {
@@ -89,7 +90,7 @@ func (h *RepServiceHandler) AddTest(c *gin.Context) {
 		return
 	}
 
-	Test := core.Test{Name: name, ConfigType: configType, Binary: testFileBytes, Template: jsonData}
+	Test := core.Test{Name: name, ConfigType: configType, Binary: testFileBytes, Template: jsonData, BinaryName: binaryName}
 	h.service.AddTest(c, &Test)
 	c.JSON(http.StatusOK, Test)
 

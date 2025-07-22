@@ -30,9 +30,7 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
-	fmt.Println(username)
 	client, err := ssh.Dial("tcp", serverIp+":22", sshConfig)
-	fmt.Println(8888888)
 	if err != nil {
 		log.Fatalf("Не удалось подключиться: %v", err)
 	}
@@ -72,7 +70,6 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 	command := strings.ReplaceAll(commandTemplate, "{BIN_FILE}", remoteBinary)
 	command = strings.ReplaceAll(command, "{CONFIG}", remoteConfig)
 
-	fmt.Println(command)
 	output, err := runCommand(client, command)
 	if err != nil {
 		return "", fmt.Errorf("команда выполнилась с ошибкой: %w", err)

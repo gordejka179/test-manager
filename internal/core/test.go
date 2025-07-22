@@ -10,6 +10,7 @@ type Test struct {
 	ConfigType string          `json:"config_type"`
 	Binary     []byte          `json:"binary"`
 	Template   json.RawMessage `json:"template"`
+	BinaryName string          `json:"binary_name"`
 }
 
 type Config struct {

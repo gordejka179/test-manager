@@ -37,7 +37,8 @@ func createTables(db *sql.DB) error {
 			name TEXT NOT NULL PRIMARY KEY,
 			config_type TEXT NOT NULL,
 			binary BLOB NOT NULL,
-			template JSON
+			template JSON,
+			binary_name TEXT NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS test_configs (
@@ -67,9 +68,9 @@ func createTables(db *sql.DB) error {
 
 func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 	_, err := s.DB.ExecContext(ctx,
-		`INSERT INTO tests (name, config_type, binary, template) 
-		VALUES (?, ?, ?, ?)`,
-		test.Name, test.ConfigType, test.Binary, test.Template)
+		`INSERT INTO tests (name, config_type, binary, template, binary_name) 
+		VALUES (?, ?, ?, ?, ?)`,
+		test.Name, test.ConfigType, test.Binary, test.Template, test.BinaryName)
 
 	if err != nil {
 		log.Fatalf("Ошибка метода AddTest: %v", err)
@@ -80,9 +81,9 @@ func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 func (s *SQLiteStorage) GetTestByName(ctx context.Context, name string) (*core.Test, error) {
 	var test core.Test
 	err := s.DB.QueryRowContext(ctx,
-		`SELECT name, config_type, binary, template 
+		`SELECT name, config_type, binary, template, binary_name 
 		FROM tests WHERE name = ?`, name).Scan(
-		&test.Name, &test.ConfigType, &test.Binary, &test.Template)
+		&test.Name, &test.ConfigType, &test.Binary, &test.Template, &test.BinaryName)
 
 	if err != nil {
 		log.Fatalf("Ошибка метода GetTestByName: %v", err)
@@ -92,7 +93,7 @@ func (s *SQLiteStorage) GetTestByName(ctx context.Context, name string) (*core.T
 
 func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT name, config_type, binary, template FROM tests`)
+		`SELECT name, config_type, binary, template, binary_name FROM tests`)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +102,7 @@ func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
 	var tests []core.Test
 	for rows.Next() {
 		var test core.Test
-		if err := rows.Scan(&test.Name, &test.ConfigType, &test.Binary, &test.Template); err != nil {
+		if err := rows.Scan(&test.Name, &test.ConfigType, &test.Binary, &test.Template, &test.BinaryName); err != nil {
 			return nil, err
 		}
 		tests = append(tests, test)
