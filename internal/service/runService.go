@@ -53,6 +53,7 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 	if err != nil {
 		log.Fatal("Ошибка метода RunTest", err)
 	}
+	//Чтобы успеть закрыть файл
 	time.Sleep(100 * time.Millisecond)
 
 	cmd := exec.Command("chmod", "+x", "tmp")

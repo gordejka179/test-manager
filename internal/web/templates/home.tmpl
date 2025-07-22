@@ -95,6 +95,30 @@
             font-weight: bold;
         }
 
+
+        .log-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .log-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+            padding-right: 50px;
+        }
+        .log-item:hover {
+            background-color: #e0e0e0;
+        }
+
+        .log-item.active {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+
+
         .config-item {
             line-height: 1.2;
         }
@@ -378,14 +402,6 @@
                 <input type="text" id="testName" required>
             </div>
             <div class="form-group">
-                <label for="configType">Тип конфигурации:</label>
-                <select id="configType" name="configType" class="form-select" required>
-                    <option value="" selected>Выберите тип...</option>
-                    <option value="toml">toml</option>
-                    <option value="viper">viper</option>
-                </select>
-            </div>
-            <div class="form-group">
                 <label>Бинарник теста:</label>
                 <div class="file-input-wrapper">
                     <input type="file" id="testFile" name="testFile" required>
@@ -418,16 +434,19 @@
     </div>
 
      <!-- Модальное окно для списка логов -->
-    <div id="logModal" class="modal">
-        <div class="modal-history-content">
+    <div id="logModal" class="modal container">
+        <div class="frame">
             <span class="closeLogModal">&times;</span>
-            <div class="log-container">
+            <div class="sidebar">
+                <div class="log-details" id="logDetails">
+                    <p>Выберите лог для просмотра деталей.</p>
+                </div>
                 <ul class="log-list" id="logList">
                     <!-- Логи будут добавлены динамически -->
                 </ul>
-
-                <div class="log-details" id="logDetails">
-                    <p>Выберите лог для просмотра деталей.</p>
+            </div>
+            <div class="content">
+                <div id="logDescription" class="log-description">
                 </div>
             </div>
         </div>
@@ -639,7 +658,7 @@
                         } else {
                             // Вложенный объект
                             htmlBuilder.push(`<fieldset><legend>${key}</legend>`);
-                            generateForm(value, fullKey, htmlBuilder);
+                            generateDescription(value, fullKey, htmlBuilder);
                             htmlBuilder.push('</fieldset>');
                         }
                     } else {
@@ -660,7 +679,7 @@
                     '<div class="config-content">'
                 ];
   
-                generateForm(config, '', htmlParts);
+                generateDescription(config, '', htmlParts);
   
                 htmlParts.push(
                     '</div>',
@@ -705,7 +724,7 @@
                         <div class="file-info">
                             <p><strong>Прикреплённый бинарник:</strong> ${test.binary_name}</p>
                             <p><strong>Формат конфигов к тесту:</strong> ${test.config_type}</p>
-                            <a href="${fileUrl}" download="${test.name}" class="download-btn">Скачать бинарник</a>
+                            <a href="${fileUrl}" download="${test.binary_name}" class="download-btn">Скачать бинарник</a>
                         </div>
                     `;
                 }
@@ -714,7 +733,8 @@
 
   
                 testDescription.innerHTML = `
-                        ${fileContent}  
+                        ${fileContent}
+                        <br>  
                         ${formHTML}                    
                 `;
 
@@ -859,7 +879,6 @@
                 
                 const testName = document.getElementById('testName').value;
                 const testFile = testFileInput.files[0];
-                const configType = document.getElementById('configType').value;
                 const configFile = configFileInput.files[0];
                 const structureName = document.getElementById('structureName').value;
                 
@@ -870,7 +889,6 @@
                     formData.append('name', testName);
                     formData.append('test_file_name', testFile.name);
                     formData.append('test_file', testFile);
-                    formData.append('config_type', configType);
                     formData.append('config_file', configFile);
                     formData.append('structure_name', structureName);
                     
@@ -964,10 +982,6 @@
                 testDescription.innerHTML = `
                     <div id="history-btn-container"></div>
                     <h2>${config.name}</h2>
-                    <span class="config-label">Config Type:</span>
-                    <span class="config-value">${config.config_type}</span>
-                    <br>
-                    <br>
                     ${configDescription}
                     <div id=btn-container class="btn-container"></div>
                 `;
@@ -1002,7 +1016,7 @@
 
                         for (let i = 0; i < configs.length; i++) {
                             let config = configs[i]
-                            const config_ul = document.querySelector(`.test-list li[data-id="${config.test_name}"]`);
+                            const config_ul = document.querySelector(`.test-list li[data-id="${config.test_name}"] .config-list`);
 
                             const configLi = document.createElement('li');
                             configLi.className = 'config-item';
@@ -1045,13 +1059,14 @@
                     
                     // Получаем созданный список логов с сервера
                     const logs = await response.json();
-                    console.log(logs)
 
                     if (logs != null){
                         logs.forEach(log => {
                             const li = document.createElement('li');
+                            const utcCreatedAt = new Date(log.created_at)
+                            const createdAt = utcCreatedAt.toLocaleString('ru-RU')
                             li.className = 'log-item'
-                            li.textContent = log.created_at;
+                            li.textContent = createdAt;
                             li.dataset.id = log.id;
                             li.addEventListener('click', () => showLogDescription(log));
 
@@ -1101,8 +1116,16 @@
             document.querySelector('.closeLogModal').addEventListener('click', closeLogModal);
 
             function showLogDescription(log) {
-                // Извлекаем нужные поля из объекта log
-                const createdAt = log.created_at
+                // Удалить активный класс у всех элементов
+                document.querySelectorAll('.log-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                const logLi = document.querySelector(`.log-list li[data-id="${log.id}"]`)
+                logLi.classList.add('active');
+
+                const utcCreatedAt = new Date(log.created_at)
+                const createdAt = utcCreatedAt.toLocaleString('ru-RU')
                 const output = log.output
     
                 // Формируем HTML для отображения
@@ -1110,9 +1133,10 @@
                     <p><strong>Дата:</strong> ${createdAt}</p>
                     <p><strong>Вывод:</strong> ${output}</p>
                 `;
+
     
                 // Вставляем сформированный HTML в элемент logDetails
-                document.getElementById('logDetails').innerHTML = logDetailsHTML;
+                document.getElementById('logDescription').innerHTML = logDetailsHTML;
             }
 
             //Открываем форму с информацией об удаленном сервере
@@ -1187,11 +1211,10 @@
                     })
 
                     if (!response.ok) {
-                        throw new Error('Ошибка при удалении конфига');
+                        throw new Error('Ошибка при удалении конфига на сервере');
                     }
 
                     const configLi = document.querySelector(`.test-list .config-list li[data-id="${configId}"]`);
-                    console.log(configLi)
                     configLi.remove()
                     testDescription.innerHTML = '';
                 } catch (error) {
@@ -1211,7 +1234,6 @@
             //Удаление теста
             deleteTestForm.addEventListener('submit', async function(e) {
                 e.preventDefault()
-                console.log(179999)
                 deleteTestModal.style.display = 'none';
                 const testName = deleteTestModal.dataset.testName;
                 try {
@@ -1228,7 +1250,6 @@
                     }
 
                     const configLi = document.querySelector(`.test-list li[data-id="${testName}"]`);
-                    console.log(configLi)
                     configLi.remove()
                     testDescription.innerHTML = '';
                 } catch (error) {
@@ -1245,7 +1266,5 @@
         });
 
     </script>
-    <!-- Materialize JavaScript -->
-//<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>

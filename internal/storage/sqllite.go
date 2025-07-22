@@ -225,9 +225,11 @@ func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]co
 	var logs []core.Log
 	for rows.Next() {
 		var log core.Log
-		if err := rows.Scan(
+		err := rows.Scan(
 			&log.ID, &log.ConfigID, &log.CreatedAt, &log.Output,
-		); err != nil {
+		)
+
+		if err != nil {
 			return nil, err
 		}
 		logs = append(logs, log)

@@ -8,7 +8,7 @@ ley = 0.0
   user = ""
 
 [log]
-  invalidfieldslog = ""
+  invalidfieldslog = "avada"
   missingdocsimportedlog = ""
 
 [run]
@@ -17,5 +17,5 @@ ley = 0.0
   [run.mode]
     mom = 0.0
     [run.mode.dad]
-      minus = ""
+      minus = "pan"
       plus = ""

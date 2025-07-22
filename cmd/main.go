@@ -2,19 +2,13 @@ package main
 
 import (
 	"log"
-	"os"
 
 	tm "github.com/gordejka179/test-manager"
 	"github.com/gordejka179/test-manager/internal/api"
 )
 
 type Config struct {
-	appPort       string
-	dbUsername    string
-	dbPassword    string
-	dbName        string
-	SessionSecret string
-	dbHost        string
+	appPort string
 }
 
 func main() {
@@ -31,27 +25,7 @@ func main() {
 }
 
 func InitConfig() Config {
-
-	result := Config{
-		appPort:       os.Getenv("APP_PORT"),
-		dbUsername:    os.Getenv("DB_USER"),
-		dbPassword:    os.Getenv("DB_PASSWORD"),
-		dbName:        os.Getenv("DB_NAME"),
-		SessionSecret: os.Getenv("SESSION_SECRET"),
-		dbHost:        os.Getenv("DB_HOST"),
+	return Config{
+		appPort: "8080",
 	}
-
-	// default value
-	if result.dbHost == "" {
-		return Config{
-			appPort:       "8080",
-			dbUsername:    "postgres",
-			dbPassword:    "qwerty",
-			dbName:        "postgres",
-			SessionSecret: "session",
-			dbHost:        "localhost",
-		}
-	}
-
-	return result
 }

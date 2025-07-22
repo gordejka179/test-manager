@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -79,6 +80,7 @@ func (h *RepServiceHandler) AddTest(c *gin.Context) {
 	configFileBytes, err := io.ReadAll(configFile)
 
 	data, err := pkg.ParseStructsFromFile(configFileBytes, structureName)
+	fmt.Println(data)
 
 	//fmt.Println(string(configFileBytes))
 	// Выводим результат
@@ -104,7 +106,6 @@ func (h *RepServiceHandler) AddConfig(c *gin.Context) {
 		return
 	}
 
-	//fmt.Println(c.Request.PostForm)
 	data := pkg.ConvertToMap(c.Request.PostForm)
 
 	testName, ok := data["test_name"].(string)
