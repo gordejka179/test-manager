@@ -49,9 +49,9 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 		log.Fatal("Ошибка метода RunTest", err)
 	}
 
-	output := pkg.СonnectSSH(serverIp, username, commandTemplate)
+	output, err := pkg.СonnectSSH(serverIp, username, commandTemplate)
 
 	log := core.Log{Output: output, ConfigID: configId}
 	s.repo.AddLog(ctx, &log)
-	return nil
+	return err
 }

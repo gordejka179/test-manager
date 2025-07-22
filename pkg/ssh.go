@@ -6,22 +6,33 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
 )
 
-func СonnectSSH(serverIp string, username string, commandTemplate string) string {
+func СonnectSSH(serverIp string, username string, commandTemplate string) (string, error) {
+	cmd := exec.Command("bash", "-c", "echo $HOME")
+
+	outputHome, err := cmd.CombinedOutput()
+	homeDir := strings.TrimSpace(string(outputHome))
+	if err != nil {
+		return "", fmt.Errorf("ошибка выполения команды: %w", err)
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User: username,
 		Auth: []ssh.AuthMethod{
-			PublicKeyFile("/home/ivan/.ssh/key2"), //путь к приватному ключу, ВАЖНО: полный путь
+			PublicKeyFile(homeDir + "/.ssh/key2"), //путь к приватному ключу, ВАЖНО: полный путь
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 
+	fmt.Println(username)
 	client, err := ssh.Dial("tcp", serverIp+":22", sshConfig)
+	fmt.Println(8888888)
 	if err != nil {
 		log.Fatalf("Не удалось подключиться: %v", err)
 	}
@@ -61,13 +72,13 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) strin
 	command := strings.ReplaceAll(commandTemplate, "{BIN_FILE}", remoteBinary)
 	command = strings.ReplaceAll(command, "{CONFIG}", remoteConfig)
 
+	fmt.Println(command)
 	output, err := runCommand(client, command)
 	if err != nil {
-		log.Fatalf("Команда выполнилась с ошибкой: %v", err)
+		return "", fmt.Errorf("команда выполнилась с ошибкой: %w", err)
 	}
 
-	//fmt.Printf("Вывод программы:\n%s\n", output)
-	return output
+	return output, nil
 }
 
 // возвращает AuthMethod для аутентификации по ключу

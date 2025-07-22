@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Менеджер тестов</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,10 +40,6 @@
             overflow-y: auto;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
         .new-test-btn {
             width: 100%;
             padding: 10px;
@@ -298,6 +298,8 @@
             border-radius: 4px;
             cursor: pointer;
             margin-top: 10px;  
+            margin-left: auto;
+            margin-top: 10px;
         }  
 
         .delete-test-btn:hover {
@@ -318,6 +320,21 @@
 
         .delete-config-btn:hover {
             background-color: #b31313ff;
+        }
+
+        .save-config-btn {
+            display: inline-block;
+            padding: 8px 16px;  
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;  
+        }  
+
+        .save-config-btn:hover {
+            background-color: #45a049;
         }
 
 
@@ -1225,5 +1242,7 @@
         });
 
     </script>
+    <!-- Materialize JavaScript -->
+//<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
