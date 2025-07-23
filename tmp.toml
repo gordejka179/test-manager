@@ -1,16 +1,16 @@
-debug_mode = false
-encryption_key = ""
 
-[cache]
-  db_urls = ["ss", "sd"]
-  expiration_min = 0
+[database]
+  dbConfig = "a"
+  dbName = "b"
+  hosts = ["c", "d"]
+  password = ""
+  user = ""
 
-[server]
-  max_percent_cpu_usage = 0
-  port = 0
-  request_timeout_seconds = 0
+[log]
+  invalidFieldsLog = "lo"
+  missingDocsImportedLog = ""
 
-[tracer]
-  endpoint_url = ""
-  service_name = ""
-  url_path = ""
+[run]
+  consumerGoroutines = 0
+  mode = 2
+  readerGoroutines = 0

@@ -1192,11 +1192,12 @@
 
 
                     if (!response.ok) {
-                        throw new Error('Ошибка при загрузке конфигов к тесту');
+                        const errorResponse = await response.json();
+                        throw new Error(`Ошибка при запуске теста: ${errorResponse.error}`);
                     }
                 } catch (error) {
                     console.error('Ошибка:', error);
-                    testDescription.innerHTML = `<p style="color: red;">Ошибка при загрузке конфигов к тесту: ${error.message}</p>`;
+                    testDescription.innerHTML = `<p style="color: red;">Ошибка при запуске теста: ${error.message}</p>`;
                 }
 
 
