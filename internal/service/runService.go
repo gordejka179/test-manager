@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,14 +25,14 @@ func NewRunService(repo TestRepository) *RunService {
 func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string, username string, commandTemplate string) error {
 	config, err := s.repo.GetConfigByID(ctx, configId)
 	if err != nil {
-		log.Fatal("Ошибка метода RunTest:", err)
+		return fmt.Errorf("ошибка метода RunTest: %v", err)
 	}
 
 	testName := config.TestName
 	test, err := s.repo.GetTestByName(ctx, testName)
 
 	if err != nil {
-		log.Fatal("Ошибка метода RunTest:", err)
+		return fmt.Errorf("ошибка метода RunTest: %v", err)
 	}
 
 	var data map[string]interface{}
@@ -45,13 +44,13 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 
 	file, err := os.Create("tmp")
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("не получилось создать файл tmp локально: %v", err)
 	}
 
 	_, err = file.Write(test.Binary)
 	file.Close()
 	if err != nil {
-		log.Fatal("Ошибка метода RunTest", err)
+		return fmt.Errorf("ошибка метода RunTest: %v", err)
 	}
 	//Чтобы успеть закрыть файл
 	time.Sleep(100 * time.Millisecond)
@@ -59,7 +58,7 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 	cmd := exec.Command("chmod", "+x", "tmp")
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("не получилось выдать право бинарнику на исполнение: %w", err)
+		return fmt.Errorf("не получилось выдать право бинарнику на исполнение: %v", err)
 	}
 
 	var output string

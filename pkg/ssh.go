@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,7 +18,7 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 	outputHome, err := cmd.CombinedOutput()
 	homeDir := strings.TrimSpace(string(outputHome))
 	if err != nil {
-		return "", fmt.Errorf("ошибка выполения команды: %w", err)
+		return "", fmt.Errorf("ошибка выполения команды: %v", err)
 	}
 
 	sshConfig := &ssh.ClientConfig{
@@ -32,14 +31,14 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 
 	client, err := ssh.Dial("tcp", serverIp+":22", sshConfig)
 	if err != nil {
-		log.Fatalf("Не удалось подключиться: %v", err)
+		return "", fmt.Errorf("не удалось подключиться: %v", err)
 	}
 	defer client.Close()
 
 	// Копируем бинарник на сервер
 	session, err := client.NewSession()
 	if err != nil {
-		log.Fatalf("Не удалось создать сессию: %v", err)
+		return "", fmt.Errorf("не удалось создать сессию: %v", err)
 	}
 	defer session.Close()
 
@@ -49,21 +48,21 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 	err = session.Run("echo $HOME")
 
 	if err != nil {
-		log.Fatalf("Не удалось узнать адрес директории: %v", err)
+		return "", fmt.Errorf("не удалось узнать адрес директории: %v", err)
 	}
 
 	localBinary := "tmp"
 	remoteBinary := strings.TrimSpace(stdout.String()) + "/tmpBinaryTM"
 
 	if err := copyFile(client, localBinary, remoteBinary); err != nil {
-		log.Fatalf("Ошибка копирования бинарника: %v", err)
+		return "", fmt.Errorf("ошибка копирования бинарника: %v", err)
 	}
 
 	localConfig := "tmp.toml"
 	remoteConfig := strings.TrimSpace(stdout.String()) + "/tmpConfigTM"
 
 	if err := copyFile(client, localConfig, remoteConfig); err != nil {
-		log.Fatalf("Ошибка копирования конфига: %v", err)
+		return "", fmt.Errorf("ошибка копирования конфига: %v", err)
 	}
 
 	// Выполняем команду на сервере
@@ -72,7 +71,7 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 
 	output, err := runCommand(client, command)
 	if err != nil {
-		return "", fmt.Errorf("команда выполнилась с ошибкой: %w", err)
+		return "", fmt.Errorf("команда выполнилась с ошибкой: %v", err)
 	}
 
 	return output, nil

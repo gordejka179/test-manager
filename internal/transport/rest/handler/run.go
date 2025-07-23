@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -30,5 +31,9 @@ func (h *RunServiceHandler) RunTest(c *gin.Context) {
 	serverIp := c.PostForm("server_ip")
 	username := c.PostForm("username")
 	commandTemplate := c.PostForm("commandTemplate")
-	h.service.RunTest(c, configId, serverIp, username, commandTemplate)
+	err = h.service.RunTest(c, configId, serverIp, username, commandTemplate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 }

@@ -39,7 +39,6 @@ func (h *RepServiceHandler) GetAllTests(c *gin.Context) {
 	tests, err := h.service.GetAllTests(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		log.Fatal(err)
 		return
 	}
 	c.JSON(http.StatusOK, tests)
