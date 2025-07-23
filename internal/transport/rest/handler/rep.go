@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -80,9 +79,7 @@ func (h *RepServiceHandler) AddTest(c *gin.Context) {
 	configFileBytes, err := io.ReadAll(configFile)
 
 	data, err := pkg.ParseStructsFromFile(configFileBytes, structureName)
-	fmt.Println(data)
 
-	//fmt.Println(string(configFileBytes))
 	// Выводим результат
 	jsonData, err := json.Marshal(data)
 	if err != nil {
@@ -93,7 +90,15 @@ func (h *RepServiceHandler) AddTest(c *gin.Context) {
 	}
 
 	Test := core.Test{Name: name, ConfigType: configType, Binary: testFileBytes, Template: jsonData, BinaryName: binaryName}
-	h.service.AddTest(c, &Test)
+	err = h.service.AddTest(c, &Test)
+	if err != nil {
+		if err.Error() == "тест с таким именем уже есть" {
+			c.JSON(http.StatusBadRequest,
+				gin.H{"error": "тест с таким именем уже есть"},
+			)
+			return
+		}
+	}
 	c.JSON(http.StatusOK, Test)
 
 	//saveToTOML("tmp2.toml", data)
@@ -108,21 +113,8 @@ func (h *RepServiceHandler) AddConfig(c *gin.Context) {
 
 	data := pkg.ConvertToMap(c.Request.PostForm)
 
-	testName, ok := data["test_name"].(string)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Имя теста не должно быть числом",
-		})
-		return
-	}
-
-	configName, ok := data["config_name"].(string)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Имя конфига не должно быть числом",
-		})
-		return
-	}
+	testName := c.Request.PostForm["test_name"][0]
+	configName := c.Request.PostForm["config_name"][0]
 
 	configType, ok := data["config_type"].(string)
 	if !ok {

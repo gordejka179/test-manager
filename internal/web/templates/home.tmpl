@@ -369,7 +369,30 @@
             width: 100%;
         }
 
+        .config-form label {
+            display: inline-block;
+            min-width: 180px;
+            margin-right: 10px;
+            vertical-align: top;
+        }
 
+        .config-form input[type="text"] {
+            display: inline-block;
+            margin-bottom: 8px;
+            vertical-align: top;
+        }
+
+        .config-form fieldset {
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+
+        .config-form legend {
+            font-weight: bold;
+            padding: 0 5px;
+        }
+
+        
 
     </style>
 </head>
@@ -801,6 +824,7 @@
                     showConfigDescription(newConfig);
                 });
 
+                console.log(newConfig.test_name)
                 const config_ul = document.querySelector(`.test-list li[data-id="${newConfig.test_name}"] .config-list`);
                 config_ul.appendChild(configLi);
 
@@ -899,9 +923,10 @@
                     });
                     
                     if (!response.ok) {
-                        throw new Error('Ошибка при создании теста');
+                        const errorResponse = await response.json();
+                        console.log(errorResponse)
+                        throw new Error(`Ошибка при создании теста: ${errorResponse.error}`);
                     }
-                    
                     
                     // Получаем созданный тест с сервера
                     const newTest = await response.json();
@@ -968,7 +993,7 @@
                 //Кнопка для запуска
                 const runBtn = document.createElement('button');
                 runBtn.className = 'run-btn';
-                runBtn.textContent = 'Run';
+                runBtn.textContent = 'Запуск';
                 runBtn.addEventListener('click', () => openRunModal(config.id));
 
                 //Кнопка для удаления конфига

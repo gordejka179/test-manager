@@ -1,21 +1,16 @@
-ley = 0.0
+debug_mode = false
+encryption_key = ""
 
-[db]
-  databaseconfigpath = ""
-  databasename = ""
-  hosts = []
-  password = ""
-  user = ""
+[cache]
+  db_urls = ["ss", "sd"]
+  expiration_min = 0
 
-[log]
-  invalidfieldslog = "avada"
-  missingdocsimportedlog = ""
+[server]
+  max_percent_cpu_usage = 0
+  port = 0
+  request_timeout_seconds = 0
 
-[run]
-  consumergoroutines = 0.0
-  readergoroutines = 0.0
-  [run.mode]
-    mom = 0.0
-    [run.mode.dad]
-      minus = "pan"
-      plus = ""
+[tracer]
+  endpoint_url = ""
+  service_name = ""
+  url_path = ""

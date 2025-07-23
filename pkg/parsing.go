@@ -94,18 +94,24 @@ func ParseStructsFromFile(src []byte, rootStructName string) (map[string]interfa
 	return buildMap(structs[rootStructName]), nil
 }
 
-// Функция для извлечения тега mapstructure
+// Функция для извлечения тега mapstructure или toml
 func getMapstructureTag(field *ast.Field) string {
 	if field.Tag == nil {
-		return strings.ToLower(field.Names[0].Name)
+		return field.Names[0].Name
 	}
 
 	tagStr := strings.Trim(field.Tag.Value, "`")
 	tag := reflect.StructTag(tagStr)
+	//Если в бинарнике напротив поля написано toml
+	if tagValue := tag.Get("toml"); tagValue != "" {
+		parts := strings.Split(tagValue, ",")
+		return parts[0]
+	}
+	//Если в бинарнике напротив поля написано mapstructure
 	if tagValue := tag.Get("mapstructure"); tagValue != "" {
 		parts := strings.Split(tagValue, ",")
 		return parts[0]
 	}
 
-	return strings.ToLower(field.Names[0].Name)
+	return field.Names[0].Name
 }

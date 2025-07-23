@@ -25,7 +25,7 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 	sshConfig := &ssh.ClientConfig{
 		User: username,
 		Auth: []ssh.AuthMethod{
-			PublicKeyFile(homeDir + "/.ssh/key2"), //путь к приватному ключу, ВАЖНО: полный путь
+			PublicKeyFile(homeDir + "/.ssh/id_rsa"), //путь к приватному ключу, ВАЖНО: полный путь
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}

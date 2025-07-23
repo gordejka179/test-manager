@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gordejka179/test-manager/internal/core"
 )
@@ -29,6 +30,13 @@ func NewRepService(repo TestRepository) *RepService {
 }
 
 func (s *RepService) AddTest(ctx context.Context, test *core.Test) error {
+	existingTest, err := s.repo.GetTestByName(ctx, test.Name)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки теста: %v", err)
+	}
+	if existingTest != nil {
+		return fmt.Errorf("тест с таким именем уже есть")
+	}
 	return s.repo.AddTest(ctx, test)
 }
 

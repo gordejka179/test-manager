@@ -80,15 +80,20 @@ func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 
 func (s *SQLiteStorage) GetTestByName(ctx context.Context, name string) (*core.Test, error) {
 	var test core.Test
+
 	err := s.DB.QueryRowContext(ctx,
 		`SELECT name, config_type, binary, template, binary_name 
-		FROM tests WHERE name = ?`, name).Scan(
-		&test.Name, &test.ConfigType, &test.Binary, &test.Template, &test.BinaryName)
+         FROM tests WHERE name = ?`, name).
+		Scan(&test.Name, &test.ConfigType, &test.Binary, &test.Template, &test.BinaryName)
 
 	if err != nil {
-		log.Fatalf("Ошибка метода GetTestByName: %v", err)
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("ошибка при поиске теста: %v", err)
 	}
-	return &test, err
+
+	return &test, nil
 }
 
 func (s *SQLiteStorage) GetAllTests(ctx context.Context) ([]core.Test, error) {
