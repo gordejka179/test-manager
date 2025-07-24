@@ -51,15 +51,18 @@ func СonnectSSH(serverIp string, username string, commandTemplate string) (stri
 		return "", fmt.Errorf("не удалось узнать адрес директории: %v", err)
 	}
 
-	localBinary := "tmp"
-	remoteBinary := strings.TrimSpace(stdout.String()) + "/tmpBinaryTM"
+	remoteDir := strings.TrimSpace(stdout.String()) + "/test-manager"
+	createRemoteDir(client, remoteDir)
+
+	localBinary := "./test-manager/tmpBinary"
+	remoteBinary := remoteDir + "/tmpBinary"
 
 	if err := copyFile(client, localBinary, remoteBinary); err != nil {
 		return "", fmt.Errorf("ошибка копирования бинарника: %v", err)
 	}
 
-	localConfig := "tmp.toml"
-	remoteConfig := strings.TrimSpace(stdout.String()) + "/tmpConfigTM"
+	localConfig := "./test-manager/tmpConfig.toml"
+	remoteConfig := remoteDir + "/tmpConfig.toml"
 
 	if err := copyFile(client, localConfig, remoteConfig); err != nil {
 		return "", fmt.Errorf("ошибка копирования конфига: %v", err)
@@ -90,6 +93,22 @@ func PublicKeyFile(file string) ssh.AuthMethod {
 	}
 
 	return ssh.PublicKeys(key)
+}
+
+// создать папку на удалённом сервере
+func createRemoteDir(client *ssh.Client, dirPath string) error {
+	session, err := client.NewSession()
+	if err != nil {
+		return fmt.Errorf("не удалось создать сессию: %v", err)
+	}
+	defer session.Close()
+
+	// Создаем папку с правами 777
+	cmd := fmt.Sprintf("if [ ! -d %s ]; then mkdir -p %s; chmod 777 %s; fi", dirPath, dirPath, dirPath)
+	if err := session.Run(cmd); err != nil {
+		return fmt.Errorf("не удалось создать директорию %s: %v", dirPath, err)
+	}
+	return nil
 }
 
 // копирует файл на удаленный сервер через SCP
@@ -124,7 +143,7 @@ func copyFile(client *ssh.Client, localPath, remotePath string) error {
 		defer w.Close()
 
 		// Отправляем заголовок SCP
-		fmt.Fprintf(w, "C0644 %d %s\n", stat.Size(), filepath.Base(remotePath))
+		fmt.Fprintf(w, "C0777 %d %s\n", stat.Size(), filepath.Base(remotePath))
 		if _, err := io.Copy(w, file); err != nil {
 			errChan <- err
 			return

@@ -51,7 +51,7 @@ func ParseStructsFromFile(src []byte, rootStructName string) (map[string]interfa
 
 			switch ft := field.Type.(type) {
 			case *ast.StructType:
-				// Для вложенных анонимных структур
+				// Для тех структур, которые вложены и определены внутри структуры
 				result[tag] = buildMap(ft)
 			case *ast.Ident:
 				// Базовые типы
@@ -66,7 +66,7 @@ func ParseStructsFromFile(src []byte, rootStructName string) (map[string]interfa
 				case "bool":
 					result[tag] = false
 				default:
-					// Вложенная структура, но не анонимная
+					// Вложенная структура, её отличие от ast.StructType в том, что она определена где-то в другом месте, а не внути
 					if nestedStruct, exists := structs[ft.Name]; exists {
 						result[tag] = buildMap(nestedStruct)
 					} else {

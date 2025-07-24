@@ -1,0 +1,16 @@
+
+[database]
+  dbConfig = "sdg"
+  dbName = "adp"
+  hosts = []
+  password = ""
+  user = ""
+
+[log]
+  invalidFieldsLog = ""
+  missingDocsImportedLog = ""
+
+[run]
+  consumerGoroutines = 2
+  mode = 4
+  readerGoroutines = 4

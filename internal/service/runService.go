@@ -40,11 +40,18 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 		return err
 	}
 
-	pkg.SaveToTOML("tmp.toml", data)
+	if _, err := os.Stat("test-manager"); os.IsNotExist(err) {
+		err = os.Mkdir("test-manager", 0755)
+		if err != nil {
+			return fmt.Errorf("ошибка создания папки test-manager на локальной машине: %v", err)
+		}
+	}
 
-	file, err := os.Create("tmp")
+	pkg.SaveToTOML("./test-manager/tmpConfig.toml", data)
+
+	file, err := os.Create("./test-manager/tmpBinary")
 	if err != nil {
-		return fmt.Errorf("не получилось создать файл tmp локально: %v", err)
+		return fmt.Errorf("не получилось создать файл tmpBinary локально: %v", err)
 	}
 
 	_, err = file.Write(test.Binary)
@@ -55,7 +62,7 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 	//Чтобы успеть закрыть файл
 	time.Sleep(100 * time.Millisecond)
 
-	cmd := exec.Command("chmod", "+x", "tmp")
+	cmd := exec.Command("chmod", "+x", "./test-manager/tmpBinary")
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("не получилось выдать право бинарнику на исполнение: %v", err)
@@ -65,8 +72,8 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 	if serverIp != "localhost" {
 		output, err = pkg.СonnectSSH(serverIp, username, commandTemplate)
 	} else {
-		localBinary := "./tmp"
-		localConfig := "tmp.toml"
+		localBinary := "./test-manager/tmpBinary"
+		localConfig := "./test-manager/tmpConfig.toml"
 		command := strings.ReplaceAll(commandTemplate, "{BIN_FILE}", localBinary)
 		command = strings.ReplaceAll(command, "{CONFIG}", localConfig)
 
