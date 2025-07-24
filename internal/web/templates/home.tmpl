@@ -566,7 +566,7 @@
             let tests = [];
 
             // Глобальная переменная для хранения текущего выбранного конфига
-            let configToRun = 0;
+            let configToRun = null;
             
             async function fetchTests() {
                 try {
@@ -994,7 +994,7 @@
                 const runBtn = document.createElement('button');
                 runBtn.className = 'run-btn';
                 runBtn.textContent = 'Запуск';
-                runBtn.addEventListener('click', () => openRunModal(config.id));
+                runBtn.addEventListener('click', () => openRunModal(config));
 
                 //Кнопка для удаления конфига
                 const deleteConfigBtn = document.createElement('button');
@@ -1152,9 +1152,15 @@
                 const utcCreatedAt = new Date(log.created_at)
                 const createdAt = utcCreatedAt.toLocaleString('ru-RU')
                 const output = log.output
+
+                const blob = new Blob([output], { type: 'text/plain' });
+                const fileUrl = URL.createObjectURL(blob);
+
+                const downloadName = `log_output_${log.test_name}.txt`;
     
                 // Формируем HTML для отображения
                 const logDetailsHTML = `
+                    <a href="${fileUrl}" download="${downloadName}" class="download-btn">Скачать лог</a>
                     <p><strong>Дата:</strong> ${createdAt}</p>
                     <p><strong>Вывод:</strong> ${output}</p>
                 `;
@@ -1165,8 +1171,8 @@
             }
 
             //Открываем форму с информацией об удаленном сервере
-            async function openRunModal(configId){
-                configToRun = configId;
+            async function openRunModal(config){
+                configToRun = config;
                 serverModal.style.display = 'block';
             }
 
@@ -1180,7 +1186,7 @@
                     const username = document.getElementById('username').value;
                     const commandTemplate = document.getElementById('commandTemplate').value;
 
-                    formData.append('config_id', configToRun);
+                    formData.append('config_id', configToRun.id);
                     formData.append('server_ip', serverIp);
                     formData.append('commandTemplate', commandTemplate);
                     formData.append('username', username);

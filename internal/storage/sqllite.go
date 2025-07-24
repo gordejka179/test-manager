@@ -52,6 +52,7 @@ func createTables(db *sql.DB) error {
 
 		CREATE TABLE IF NOT EXISTS test_logs (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			test_name TEXT,
 			config_id INTEGER,
 			number INTEGER,
 			output TEXT,       
@@ -63,8 +64,6 @@ func createTables(db *sql.DB) error {
 }
 
 // Tests
-
-//TODO: проверить был ли такой тест раньше
 
 func (s *SQLiteStorage) AddTest(ctx context.Context, test *core.Test) error {
 	_, err := s.DB.ExecContext(ctx,
@@ -218,7 +217,7 @@ func (s *SQLiteStorage) DeleteConfig(ctx context.Context, id string) error {
 
 func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]core.Log, error) {
 	rows, err := s.DB.QueryContext(ctx,
-		`SELECT id, config_id, created_at, output
+		`SELECT id, test_name, config_id, created_at, output
 		FROM test_logs WHERE config_id = ?`,
 		configID)
 
@@ -231,7 +230,7 @@ func (s *SQLiteStorage) GetLogsToConfig(ctx context.Context, configID int) ([]co
 	for rows.Next() {
 		var log core.Log
 		err := rows.Scan(
-			&log.ID, &log.ConfigID, &log.CreatedAt, &log.Output,
+			&log.ID, &log.TestName, &log.ConfigID, &log.CreatedAt, &log.Output,
 		)
 
 		if err != nil {
@@ -257,9 +256,9 @@ func (s *SQLiteStorage) AddLog(ctx context.Context, log *core.Log) error {
 
 	num += 1
 	_, err := s.DB.ExecContext(ctx,
-		`INSERT INTO test_logs (config_id, number, output)
-			VALUES (?, ?, ?)`,
-		log.ConfigID, num, log.Output)
+		`INSERT INTO test_logs (test_name, config_id, number, output)
+			VALUES (?, ?, ?, ?)`,
+		log.TestName, log.ConfigID, num, log.Output)
 
 	if err != nil {
 		return err

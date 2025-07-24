@@ -89,7 +89,10 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 		}
 	}
 
-	log := core.Log{Output: output, ConfigID: configId}
-	s.repo.AddLog(ctx, &log)
+	log := core.Log{Output: output, ConfigID: configId, TestName: testName}
+	err = s.repo.AddLog(ctx, &log)
+	if err != nil {
+		return fmt.Errorf("ошибка метода RunTest при добавлении лога: %v", err)
+	}
 	return err
 }
