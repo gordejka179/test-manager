@@ -1253,7 +1253,7 @@
                 const blob = new Blob([output], { type: 'text/plain' });
                 const fileUrl = URL.createObjectURL(blob);
 
-                const downloadName = `log_output_${log.config_name}.txt`;
+                const downloadName = `log_output_${log.config_id}.txt`;
     
                 // Формируем HTML для отображения
                 const logDetailsHTML = `
