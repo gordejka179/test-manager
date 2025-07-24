@@ -392,6 +392,55 @@
             padding: 0 5px;
         }
 
+        #fileImportConfigInput {
+            display: none;
+        }
+
+        .import-config-btn {
+            width: 140px;
+            height: 30px;
+            margin-left: 10px;
+            background-color: #2196F3;
+            color: white; 
+            border: none;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            line-height: 30px; 
+        }
+
+        .import-config-btn:hover {
+            background-color: #0b7dda;
+        }
+
+
+        .export-btn {
+            display: inline-block;
+            width: 58px;          
+            padding: 8px 12px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13.333px;
+            cursor: pointer;
+            margin-left: auto;
+            margin-top: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center; 
+        }
+
+        .export-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        
+
         
 
     </style>
@@ -743,23 +792,64 @@
                     const blob = new Blob([bytes], { type: 'application/octet-stream' });
                     const fileUrl = URL.createObjectURL(blob);
                     
+                    
                     fileContent = `
                         <div class="file-info">
                             <p><strong>Прикреплённый бинарник:</strong> ${test.binary_name}</p>
-                            <p><strong>Формат конфигов к тесту:</strong> ${test.config_type}</p>
                             <a href="${fileUrl}" download="${test.binary_name}" class="download-btn">Скачать бинарник</a>
                         </div>
                     `;
                 }
 
+                //Создаём форму на основе конфига
                 const formHTML = createHTMLForm(test.template);
 
-  
                 testDescription.innerHTML = `
                         ${fileContent}
-                        <br>  
+                        <br>
+                        <input type="file" id="fileImportConfigInput">
+                        <button id="importConfigBtn" class="import-config-btn">Импорт</button> 
+                        <br> 
                         ${formHTML}                    
                 `;
+
+                const importConfigBtn = document.getElementById('importConfigBtn');
+                const fileInput = document.getElementById('fileImportConfigInput');
+
+                importConfigBtn.addEventListener('click', () => {
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', async (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+    
+                    reader.onload = (e) => {
+                        try {
+                            const fileImportContent = e.target.result;   
+                            const jsonData = JSON.parse(fileImportContent);
+                            console.log('Полученные JSON данные:', jsonData);
+                            const formImportHTML = createHTMLForm(jsonData);
+                            testDescription.innerHTML = `
+                                ${fileContent}
+                                <br>  
+                                ${formImportHTML}                    
+                            `;
+                            document.getElementById('btn-container').appendChild(saveConfigBtn);
+            
+                        } catch (err) {
+                            console.error('Ошибка при чтении файла:', err);
+                            alert('Файл не содержит валидный JSON');
+                        }
+                    };
+
+                    reader.readAsText(file);
+
+                });
+                
+
+
 
                 //Кнопка для сохранения конфига
                 const saveConfigBtn = document.createElement('button');
@@ -983,6 +1073,7 @@
                     }
                 }
 
+
                 const configDescription = createDescription(config.content)
                 //Кнопка с логами
                 const historyBtn = document.createElement('button');
@@ -1002,13 +1093,19 @@
                 deleteConfigBtn.textContent = 'Удалить';
                 deleteConfigBtn.addEventListener('click', () => openDeleteConfigModal(config.id));
 
-    
+                // ссылка для экспорта
+                const jsonData = config.content;
+                const jsonString = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const fileUrl = URL.createObjectURL(blob);
+
                 // Обновляем содержимое
                 testDescription.innerHTML = `
                     <div id="history-btn-container"></div>
                     <h2>${config.name}</h2>
                     ${configDescription}
                     <div id=btn-container class="btn-container"></div>
+                    <a href="${fileUrl}" download="${config.name}" class="export-btn">Экспорт</a>
                 `;
                 
                 document.getElementById('history-btn-container').appendChild(historyBtn);
@@ -1156,7 +1253,7 @@
                 const blob = new Blob([output], { type: 'text/plain' });
                 const fileUrl = URL.createObjectURL(blob);
 
-                const downloadName = `log_output_${log.test_name}.txt`;
+                const downloadName = `log_output_${log.config_name}.txt`;
     
                 // Формируем HTML для отображения
                 const logDetailsHTML = `

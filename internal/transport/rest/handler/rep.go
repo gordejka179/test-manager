@@ -189,3 +189,30 @@ func (h *RepServiceHandler) DeleteTest(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 }
+
+func (h *RepServiceHandler) ImportConfig(c *gin.Context) {
+	testName := c.PostForm("test_name")
+	err := h.service.DeleteTest(c, testName)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	configFileHeader, err := c.FormFile("config_file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Файл не загружен"})
+		return
+	}
+
+	configFile, _ := configFileHeader.Open()
+	defer configFile.Close()
+
+	configFileBytes, err := io.ReadAll(configFile)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка чтения данных"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"json": configFileBytes})
+
+}
