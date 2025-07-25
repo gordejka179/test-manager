@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gordejka179/test-manager/internal/core"
@@ -79,14 +80,38 @@ func (s *RunService) RunTest(ctx context.Context, configId int, serverIp string,
 
 		cmd := exec.Command("bash", "-c", command)
 		var stdout, stderr bytes.Buffer
+		var otherError string
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 		err := cmd.Run()
 		if err != nil {
-			output = stderr.String()
-		} else {
-			output = stdout.String()
+			switch err := err.(type) {
+			case *exec.ExitError:
+				// Ошибка выполнения команды (ненулевой код или сигнал)
+
+				exitCode := err.ExitCode()
+				// Если завершено сигналом
+				if status, ok := err.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+					signal := status.Signal()
+					otherError = fmt.Sprintf("Команда убита сигналом: %v (код: %d)\n", signal, exitCode)
+				} else {
+					//Обычный ненулевой код возврата
+					otherError = fmt.Sprintf("Команда завершилась с кодом ошибки %d\n.", exitCode)
+				}
+
+			case *exec.Error:
+				// Ошибка запуска (например, команда не найдена)
+
+				otherError = fmt.Sprintf("Ошибка запуска: %v\n", err)
+
+			default:
+				// Все остальные ошибки
+
+				otherError = fmt.Sprintf("Неизвестная ошибка: %T %v\n", err, err)
+			}
 		}
+
+		output = fmt.Sprintf("\n Поток ошибок: %s\n Поток вывода: %s\n Другая ошибка: %s\n", stderr.String(), stdout.String(), otherError)
 	}
 
 	log := core.Log{Output: output, ConfigID: configId, TestName: testName}

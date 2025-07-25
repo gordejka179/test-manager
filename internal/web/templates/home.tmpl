@@ -1162,6 +1162,7 @@
             //Получаем список логов к конфигу
             async function getHistoryToConfig(configId) {
                 document.getElementById('logDetails').innerHTML = '<p>Выберите лог для просмотра деталей.</p>';
+                document.getElementById('logDescription').innerHTML = ''
                 while (logList.firstChild) {
                     logList.removeChild(logList.firstChild);
                 }
@@ -1254,12 +1255,11 @@
                 const fileUrl = URL.createObjectURL(blob);
 
                 const downloadName = `log_output_${log.config_id}.txt`;
-    
                 // Формируем HTML для отображения
                 const logDetailsHTML = `
                     <a href="${fileUrl}" download="${downloadName}" class="download-btn">Скачать лог</a>
                     <p><strong>Дата:</strong> ${createdAt}</p>
-                    <p><strong>Вывод:</strong> ${output}</p>
+                    <p><strong>Вывод:</strong> ${output.replace(/\n/g, '<br>')}</p>
                 `;
 
     

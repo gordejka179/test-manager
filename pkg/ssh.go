@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -175,11 +176,36 @@ func runCommand(client *ssh.Client, cmd string) (string, error) {
 	var stdout, stderr bytes.Buffer
 	session.Stdout = &stdout
 	session.Stderr = &stderr
-
+	var otherError string
 	err = session.Run(cmd)
 	if err != nil {
-		return stderr.String(), err
+		switch err := err.(type) {
+		case *exec.ExitError:
+			// Ошибка выполнения команды (ненулевой код или сигнал)
+
+			exitCode := err.ExitCode()
+			// Если завершено сигналом
+			if status, ok := err.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+				signal := status.Signal()
+				otherError = fmt.Sprintf("Команда убита сигналом: %v (код: %d)\n", signal, exitCode)
+			} else {
+				//Обычный ненулевой код возврата
+				otherError = fmt.Sprintf("Команда завершилась с кодом ошибки %d\n.", exitCode)
+			}
+
+		case *exec.Error:
+			// Ошибка запуска (например, команда не найдена)
+
+			otherError = fmt.Sprintf("Ошибка запуска: %v\n", err)
+
+		default:
+			// Все остальные ошибки
+
+			otherError = fmt.Sprintf("Неизвестная ошибка: %T %v\n", err, err)
+		}
 	}
 
-	return stdout.String(), nil
+	output := fmt.Sprintf("\n Поток ошибок: %s\n Поток вывода: %s\n Другая ошибка: %s\n", stderr.String(), stdout.String(), otherError)
+
+	return output, nil
 }

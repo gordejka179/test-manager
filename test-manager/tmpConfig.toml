@@ -1,6 +1,6 @@
 
 [database]
-  dbConfig = "eriireir"
+  dbConfig = ""
   dbName = ""
   hosts = []
   password = ""
@@ -11,6 +11,6 @@
   missingDocsImportedLog = ""
 
 [run]
-  consumerGoroutines = 57
-  mode = 8
-  readerGoroutines = 2
+  consumerGoroutines = 0
+  mode = 0
+  readerGoroutines = 0
